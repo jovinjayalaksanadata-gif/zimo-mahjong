@@ -1,0 +1,16 @@
+{
+  "name": "zimo-mahjong",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "wrangler": "^3.114.17"
+  },
+  "private": true
+}

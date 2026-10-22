@@ -1,0 +1,10 @@
+name = "zimo-mahjong"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "public"
+
+# Database D1. Setelah menjalankan `npx wrangler d1 create zimo-db`,
+# ganti database_id di bawah dengan ID yang muncul.
+[[d1_databases]]
+binding = "DB"
+database_name = "zimo-db"
+database_id = "GANTI-DENGAN-DATABASE-ID"
