@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cek booking — Zi Mo Mahjong</title>
+<meta name="theme-color" content="#003a2b">
+<link rel="icon" href="/assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+main { padding-top: 40px; max-width: 560px; }
+.code { font: 600 1.6rem/1 var(--mono); color: var(--red); letter-spacing: .05em; }
+dl.d { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 16px 0; }
+dl.d dt { color: var(--muted); }
+dl.d dd { margin: 0; font-weight: 700; }
+.payinfo { white-space: pre-line; background: var(--paper); padding: 14px 16px; border-radius: 8px; }
+.grid3 { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; }
+@media (max-width: 480px) { .grid3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="site-head"><div class="wrap">
+  <a href="/" aria-label="Beranda"><img src="/assets/logo-520.webp" alt="Zi Mo Mahjong" width="520" height="282"></a>
+  <nav><a href="/booking.html">Booking</a><a href="/skor.html">Hitung poin</a><a href="/cek.html" aria-current="page">Cek booking</a></nav>
+</div></header>
+<main class="wrap">
+  <h1>Cek booking</h1>
+  <form id="look" class="frame"><span class="c1"></span><span class="c2"></span>
+    <label class="f"><span>Kode booking</span><input name="code" placeholder="ZM-XXXXXX" required autocapitalize="characters"></label>
+    <label class="f"><span>Nomor WhatsApp yang dipakai saat booking</span><input name="phone" type="tel" inputmode="tel" required></label>
+    <button class="btn block">Cek booking</button>
+  </form>
+
+  <div id="res" class="hide" style="margin-top:32px">
+    <div class="row"><span class="code" id="r-code"></span><span class="pill" id="r-status"></span></div>
+    <dl class="d" id="r-dl"></dl>
+    <div id="r-pay" class="hide">
+      <p class="payinfo" id="r-payinfo"></p>
+      <p><a class="btn jade small" id="r-wa" target="_blank" rel="noopener">Kirim bukti via WhatsApp</a></p>
+    </div>
+    <div id="r-resch" class="hide" style="margin-top:28px">
+      <h2 style="font-size:1.3rem">Ganti jadwal</h2>
+      <p class="muted">Bisa diganti paling lambat H-1 sebelum tanggal main. Durasi tetap sama. Booking tidak bisa dibatalkan atau di-refund.</p>
+      <form id="resch">
+        <div class="grid3">
+          <label class="f"><span>Tanggal baru</span><input type="date" name="date" required></label>
+          <label class="f"><span>Meja</span><select name="table_id" id="r-table"></select></label>
+          <label class="f"><span>Jam mulai</span><select name="hour" id="r-hour"></select></label>
+        </div>
+        <button class="btn">Simpan jadwal baru</button>
+      </form>
+    </div>
+    <p id="r-locked" class="muted hide" style="margin-top:20px">Jadwal booking ini sudah tidak bisa diganti lewat web. Hubungi kami lewat WhatsApp kalau ada kendala.</p>
+  </div>
+</main>
+<footer class="site-foot"><div class="wrap row"><div class="grow">Zi Mo Mahjong</div><a href="/">Beranda</a></div></footer>
+<script type="module">
+import { api, rp, toast, $, fmtDate, fmtTime, fmtDT, STATUS, waLink, todayIso, addDays, pad, esc } from '/js/common.js';
+let cur = null, info = null;
+const p = new URLSearchParams(location.search);
+const f = $('#look');
+if (p.get('code')) { f.code.value = p.get('code'); f.phone.value = p.get('phone') || ''; }
+async function look() {
+  try {
+    info = info || await api('/public/info');
+    cur = await api(`/bookings/lookup?code=${encodeURIComponent(f.code.value.trim())}&phone=${encodeURIComponent(f.phone.value)}`);
+    const b = cur.booking;
+    $('#r-code').textContent = b.code;
+    $('#r-status').textContent = STATUS[b.status] || b.status; $('#r-status').className = 'pill ' + b.status;
+    $('#r-dl').innerHTML = `<dt>Nama</dt><dd>${esc(b.customer_name)}</dd><dt>Meja</dt><dd>${esc(b.table_name)}</dd>
+      <dt>Tanggal</dt><dd>${fmtDate(b.start_ts)}</dd><dt>Jam</dt><dd class="num">${fmtTime(b.start_ts)}–${fmtTime(b.end_ts)} (${b.hours} jam)</dd>
+      <dt>Total</dt><dd class="num">${rp(b.total)} ${b.paid ? '· lunas' : ''}</dd>`;
+    const unpaid = b.status === 'pending';
+    $('#r-pay').classList.toggle('hide', !unpaid);
+    if (unpaid) {
+      $('#r-payinfo').textContent = cur.payment_info + `\n\nBayar sebelum ${fmtDT(b.expires_at)} WIB.`;
+      $('#r-wa').href = waLink(cur.whatsapp, `Halo Zi Mo, konfirmasi pembayaran booking ${b.code} a.n. ${b.customer_name} (${rp(b.total)}).`);
+    }
+    $('#r-resch').classList.toggle('hide', !cur.can_reschedule);
+    $('#r-locked').classList.toggle('hide', cur.can_reschedule || !['pending', 'confirmed'].includes(b.status));
+    if (cur.can_reschedule) {
+      const r = $('#resch');
+      r.date.min = addDays(todayIso(), 1); r.date.value = r.date.value || addDays(todayIso(), 1);
+      $('#r-table').innerHTML = info.tables.map((t) => `<option value="${t.id}" ${t.id === b.table_id ? 'selected' : ''}>${esc(t.name)}</option>`).join('');
+      $('#r-hour').innerHTML = Array.from({ length: 24 }, (_, h) => `<option value="${h}">${pad(h)}.00</option>`).join('');
+      $('#r-hour').value = new Date(b.start_ts * 1000).getUTCHours();
+    }
+    $('#res').classList.remove('hide');
+  } catch (e) { $('#res').classList.add('hide'); toast(e.message, true); }
+}
+f.addEventListener('submit', (e) => { e.preventDefault(); look(); });
+$('#resch').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const r = e.target;
+  try {
+    await api('/bookings/reschedule', { body: { code: cur.booking.code, phone: f.phone.value, date: r.date.value, hour: +r.hour.value, table_id: +r.table_id.value } });
+    toast('Jadwal baru tersimpan'); look();
+  } catch (err) { toast(err.message, true); }
+});
+if (p.get('code')) look();
+</script>
+</body>
+</html>

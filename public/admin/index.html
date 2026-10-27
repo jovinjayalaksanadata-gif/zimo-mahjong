@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staf — Zi Mo Mahjong</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#003a2b">
+<link rel="icon" href="/assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<!-- Login / setup -->
+<div id="auth" class="auth hide">
+  <form class="frame" id="f-login"><span class="c1"></span><span class="c2"></span>
+    <img src="/assets/logo-520.webp" alt="Zi Mo Mahjong" style="width:220px;margin:0 auto 10px">
+    <h1 class="center" style="font-size:1.3rem" id="auth-title">Masuk staf</h1>
+    <p class="muted center hide" id="setup-note">Belum ada akun. Buat akun <b>Superadmin</b> pertama (pemilik).</p>
+    <label class="f hide" id="l-name"><span>Nama</span><input name="name" maxlength="80"></label>
+    <label class="f"><span>Username</span><input name="username" autocomplete="username" autocapitalize="none" required></label>
+    <label class="f"><span>Password</span><input name="password" type="password" autocomplete="current-password" required></label>
+    <label class="f hide" id="l-key"><span>Kode setup</span><input name="key" autocomplete="off"></label>
+    <button class="btn block" id="b-login">Masuk</button>
+  </form>
+</div>
+
+<!-- Aplikasi -->
+<div id="app" class="app hide">
+  <aside class="side">
+    <img src="/assets/logo-520.webp" alt="Zi Mo Mahjong" class="side-logo">
+    <nav id="nav"></nav>
+    <div class="me"><div id="me-name"></div><span class="pill" id="me-role"></span>
+      <div class="row" style="margin-top:8px;gap:8px"><button class="link" id="b-pass">Ganti password</button><button class="link" id="b-logout">Keluar</button></div></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<dialog id="dlg"><form method="dialog" class="dlg-x"><button aria-label="Tutup">×</button></form><div id="dlg-body"></div></dialog>
+<div id="print" aria-hidden="true"></div>
+<script type="module" src="/js/admin.js"></script>
+</body>
+</html>

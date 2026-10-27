@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zi Mo Mahjong — Booking meja mahjong 24 jam</title>
+<meta name="description" content="Zi Mo Mahjong: meja mahjong otomatis, buka 24 jam. Booking meja online, hitung poin langsung dari HP.">
+<meta name="theme-color" content="#003a2b">
+<link rel="icon" href="/assets/icon-192.png">
+<meta property="og:image" content="/assets/logo-1200.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+.hero { position: relative; overflow: hidden; color: var(--ivory);
+  background: radial-gradient(120% 90% at 50% 35%, #0e6a4f 0%, var(--jade-felt) 45%, var(--jade-deep) 100%); }
+.hero::before { content: ''; position: absolute; inset: 0; opacity: .18; pointer-events: none;
+  background-image: radial-gradient(rgba(255,255,255,.25) 1px, transparent 1px); background-size: 4px 4px; }
+.hero .inner { position: relative; z-index: 2; text-align: center; padding: 56px 0 0; }
+.hero .logo { width: min(620px, 92%); margin: 0 auto; filter: drop-shadow(0 0 1.5px #faf3dd) drop-shadow(0 0 1.5px #faf3dd) drop-shadow(0 0 1px #faf3dd) drop-shadow(0 14px 24px rgba(0,0,0,.35)); }
+.hero p.lead { font-size: clamp(1.05rem, 2.2vw, 1.3rem); max-width: 34ch; margin: 18px auto 26px; color: var(--cream); }
+.hero .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.hero .cta .btn.ghost { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 2px var(--gold-soft); }
+.cloud { position: absolute; z-index: 1; pointer-events: none; animation: drift 1.4s cubic-bezier(.2,.8,.2,1) both; }
+.cloud.l1 { width: 300px; left: -70px; top: 40px; --from: -120px; }
+.cloud.l2 { width: 220px; left: -40px; top: 300px; --from: -160px; animation-delay: .15s; }
+.cloud.r1 { width: 320px; right: -80px; top: 90px; --from: 120px; transform: scaleX(-1); }
+.cloud.r2 { width: 200px; right: -30px; top: 330px; --from: 160px; animation-delay: .15s; }
+@keyframes drift { from { opacity: 0; translate: var(--from) 0; } to { opacity: 1; translate: 0 0; } }
+.hero .sign { position: relative; width: 300px; margin: 34px auto 0; }
+.hero .sign img { width: 100%; }
+.hero .sign .price { position: absolute; left: 6%; right: 6%; bottom: 13%; height: 38%; display: grid; place-items: center;
+  color: var(--red); font: 700 2.6rem/1 var(--serif); }
+.hero .sign .price small { display: block; font: 600 .78rem/1.2 var(--mono); color: var(--jade); margin-top: 4px; }
+@media (max-width: 700px) { .cloud.l2, .cloud.r2 { display: none; } .cloud.l1 { width: 180px; top: 10px; } .cloud.r1 { width: 190px; top: 30px; } .hero .sign { width: 240px; } .hero .sign .price { font-size: 2rem; } }
+
+section.block { padding: 72px 0 0; }
+.price-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
+.big-price { font-size: clamp(3.4rem, 9vw, 5.6rem); line-height: .95; margin: 0; }
+.big-price .per { display: block; font: 700 1.1rem/1 var(--serif); color: var(--jade); text-shadow: none; margin-top: 12px; }
+.rules { list-style: none; padding: 0; margin: 0; }
+.rules li { padding: 12px 0 12px 34px; border-bottom: 1px dashed var(--line); position: relative; }
+.rules li::before { content: '發'; position: absolute; left: 0; top: 11px; width: 24px; height: 28px; border-radius: 4px; display: grid; place-items: center;
+  font: 700 .85rem/1 serif; color: var(--jade); background: var(--ivory); box-shadow: 0 2px 0 var(--jade); }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 28px; counter-reset: s; }
+.step { position: relative; padding-top: 70px; }
+.step::before { counter-increment: s; content: counter(s); position: absolute; top: 0; left: 0; width: 46px; height: 58px; border-radius: 8px;
+  display: grid; place-items: center; font: 700 1.5rem/1 var(--serif); color: var(--red);
+  background: linear-gradient(#fffdf6, #f3ead2); box-shadow: var(--shadow-tile); }
+.score-band { margin-top: 72px; background: var(--jade); color: var(--cream); overflow: hidden; }
+.score-band .wrap { display: grid; grid-template-columns: 1fr 260px; gap: 32px; align-items: center; padding: 48px 0; }
+.score-band h2 { color: var(--ivory); }
+.score-band img { width: 260px; }
+.place { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.place dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 10px 18px; }
+.place dt { font-weight: 700; color: var(--jade); }
+.place dd { margin: 0; }
+.pandas { display: flex; justify-content: center; gap: 10px; align-items: flex-end; }
+.pandas img { width: 30%; max-width: 150px; }
+@media (max-width: 760px) {
+  .price-grid, .place, .score-band .wrap { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; gap: 20px; }
+  .score-band img { width: 180px; margin: 0 auto; }
+}
+</style>
+</head>
+<body>
+<header class="site-head"><div class="wrap">
+  <a href="/" aria-label="Beranda Zi Mo Mahjong"><img src="/assets/logo-520.webp" alt="Zi Mo Mahjong" width="520" height="282"></a>
+  <nav><a href="/booking.html">Booking</a><a href="/skor.html">Hitung poin</a><a href="/cek.html">Cek booking</a></nav>
+</div></header>
+
+<main>
+<section class="hero">
+  <img class="cloud l1" src="/assets/cloud/0.webp" alt="">
+  <img class="cloud l2" src="/assets/cloud/3.webp" alt="">
+  <img class="cloud r1" src="/assets/cloud/2.webp" alt="">
+  <img class="cloud r2" src="/assets/cloud/8.webp" alt="">
+  <div class="inner wrap">
+    <h1 class="hide">Zi Mo Mahjong</h1>
+    <img class="logo" src="/assets/logo-1200.webp" alt="Zi Mo Mahjong" width="1200" height="651">
+    <p class="lead" data-k="tagline">Meja mahjong otomatis, buka 24 jam.</p>
+    <div class="cta">
+      <a class="btn" href="/booking.html">Booking meja</a>
+      <a class="btn ghost" href="/skor.html">Hitung poin</a>
+    </div>
+    <div class="sign">
+      <img src="/assets/panda/13.webp" alt="Panda Zi Mo memegang papan harga" width="344" height="267">
+      <div class="price"><div><span class="hp">50K</span><small>per jam</small></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="block wrap" id="harga">
+  <div class="price-grid">
+    <div class="frame"><span class="c1"></span><span class="c2"></span>
+      <p class="big-price sticker"><span class="hp">50K</span><span class="per">per jam, per meja</span></p>
+      <p class="muted pkg hide" style="margin-top:18px"></p>
+    </div>
+    <div>
+      <h2>Sebelum datang</h2>
+      <ul class="rules">
+        <li>Satu meja untuk 4 pemain, mesin mahjong otomatis.</li>
+        <li>Dihitung per jam penuh. Lewat sedikit dari satu jam dihitung jam berikutnya.</li>
+        <li>Booking online dibayar penuh di depan supaya meja tertahan untukmu.</li>
+        <li>Tidak ada refund, tapi jadwal bisa diganti paling lambat H-1.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="block wrap">
+  <h2>Cara booking</h2>
+  <div class="steps">
+    <div class="step"><h3>Pilih meja & jam</h3><p>Ubin putih masih kosong, ubin hijau sudah terisi. Pilih jam mulai dan berapa lama main.</p></div>
+    <div class="step"><h3>Bayar penuh</h3><p>Transfer atau QRIS, lalu kirim bukti lewat WhatsApp. Slot ditahan sementara selama kamu membayar.</p></div>
+    <div class="step"><h3>Datang & main</h3><p>Sebutkan kode booking ke kasir. Mau tambah jam? Bayar sisanya di kasir.</p></div>
+  </div>
+  <p style="margin-top:28px"><a class="btn jade" href="/booking.html">Lihat jadwal kosong</a></p>
+</section>
+
+<section class="score-band">
+  <div class="wrap">
+    <div>
+      <h2>Tidak perlu kertas & pulpen</h2>
+      <p>Buat room di HP, bagikan kodenya ke teman satu meja, lalu catat setiap ronde: zimo, tembak, atau seri. Skor semua pemain langsung terhitung dan muncul di semua HP.</p>
+      <a class="btn" href="/skor.html">Buka penghitung poin</a>
+    </div>
+    <img src="/assets/panda/10.webp" alt="Panda melempar ubin mahjong" width="300" height="315">
+  </div>
+</section>
+
+<section class="block wrap" id="lokasi">
+  <div class="place">
+    <div>
+      <h2>Datang ke Zi Mo</h2>
+      <dl>
+        <dt>Alamat</dt><dd data-k="address">Apartemen B Residence, Ground Floor, BSD</dd>
+        <dt>Jam buka</dt><dd>24 jam, setiap hari</dd>
+        <dt>WhatsApp</dt><dd><a data-wa href="#">Chat kami</a></dd>
+        <dt>Instagram</dt><dd><a data-ig href="https://instagram.com/zimo_mahjong" rel="noopener">@zimo_mahjong</a></dd>
+      </dl>
+      <p style="margin-top:20px"><a class="btn ghost small hide" data-maps href="#" rel="noopener">Buka di Google Maps</a></p>
+    </div>
+    <div class="pandas" aria-hidden="true">
+      <img src="/assets/panda/6.webp" alt=""><img src="/assets/panda/0.webp" alt=""><img src="/assets/panda/9.webp" alt="">
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site-foot"><div class="wrap row">
+  <div class="grow">© <span id="yr"></span> <span data-k="business_name">Zi Mo Mahjong</span></div>
+  <a href="/admin/">Masuk staf</a>
+</div></footer>
+
+<script type="module">
+import { api, rp } from '/js/common.js';
+document.getElementById('yr').textContent = new Date().getFullYear();
+try {
+  const { settings: s } = await api('/public/info');
+  document.querySelectorAll('[data-k]').forEach((el) => { if (s[el.dataset.k]) el.textContent = s[el.dataset.k]; });
+  const k = Math.round(+s.price_per_hour / 1000);
+  document.querySelectorAll('.hp').forEach((el) => (el.textContent = k + 'K'));
+  if (+s.package_price > 0) { const p = document.querySelector('.pkg'); p.textContent = `Paket ${s.package_hours} jam: ${rp(s.package_price)}`; p.classList.remove('hide'); }
+  document.querySelector('[data-wa]').href = 'https://wa.me/' + s.whatsapp;
+  document.querySelector('[data-wa]').textContent = '+' + s.whatsapp;
+  if (s.instagram) { const ig = document.querySelector('[data-ig]'); ig.href = 'https://instagram.com/' + s.instagram; ig.textContent = '@' + s.instagram; }
+  if (s.maps_url) { const m = document.querySelector('[data-maps]'); m.href = s.maps_url; m.classList.remove('hide'); }
+} catch (e) { /* tetap tampil dengan teks bawaan */ }
+</script>
+</body>
+</html>

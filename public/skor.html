@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hitung poin — Zi Mo Mahjong</title>
+<meta name="theme-color" content="#003a2b">
+<link rel="icon" href="/assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/base.css">
+<style>
+body { background: var(--jade-deep); }
+main { padding: 24px 0 60px; color: var(--cream); }
+main h1, main h2 { color: var(--ivory); }
+.card { background: var(--cream); color: var(--ink); border-radius: 12px; padding: 22px; }
+.start { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; align-items: start; }
+.pl4 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cfg { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+details summary { cursor: pointer; font-weight: 700; color: var(--jade); margin: 6px 0 12px; }
+.recent a { display: inline-block; margin: 4px 6px 0 0; }
+
+/* Meja skor */
+.top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.top .code { font: 600 1.5rem/1 var(--mono); letter-spacing: .08em; color: var(--gold-soft); }
+.felt { position: relative; border-radius: 22px; padding: 18px;
+  background: radial-gradient(120% 100% at 50% 50%, #0e6a4f, var(--jade-felt) 60%, #073626);
+  box-shadow: inset 0 0 0 6px #5a3a1c, inset 0 0 0 9px var(--gold), 0 18px 40px rgba(0,0,0,.35); }
+.seats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.seat { background: linear-gradient(#fffdf6, #f1e7cc); color: var(--jade); border-radius: 12px; padding: 14px 16px 12px;
+  box-shadow: 0 4px 0 var(--jade-deep), 0 10px 18px rgba(0,0,0,.25); position: relative; border: 0; text-align: left; font-family: var(--serif); cursor: default; }
+.seat .wind { position: absolute; top: 10px; right: 12px; font: 700 1.1rem/1 serif; color: var(--red); opacity: .8; }
+.seat .nm { font-weight: 700; font-size: 1.05rem; padding-right: 26px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat .pts { font: 600 clamp(2rem, 7vw, 2.8rem)/1.1 var(--mono); margin-top: 4px; }
+.seat .pts.neg { color: var(--red); }
+.seat .last { font: 500 .8rem/1 var(--mono); color: var(--muted); min-height: 1em; }
+.seat.lead::after { content: '自摸'; position: absolute; left: -6px; top: -10px; background: var(--red); color: var(--ivory);
+  font: 700 .72rem/1 serif; padding: 5px 6px; border-radius: 4px; transform: rotate(-6deg); }
+.picking .seat { cursor: pointer; }
+.picking .seat:hover { transform: translateY(-2px); }
+.seat.sel-w { box-shadow: 0 4px 0 var(--red), 0 0 0 3px var(--red), 0 10px 18px rgba(0,0,0,.25); }
+.seat.sel-f { box-shadow: 0 4px 0 var(--gold), 0 0 0 3px var(--gold), 0 10px 18px rgba(0,0,0,.25); }
+.seat[disabled] { opacity: .45; }
+.actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+.actions .btn { padding: .9em .4em; }
+.panel { margin-top: 4px; }
+.panel h3 { margin-bottom: 4px; }
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper button { width: 46px; height: 46px; font-size: 1.4rem; padding: 0; }
+.stepper output { font: 600 1.8rem/1 var(--mono); min-width: 2.2ch; text-align: center; color: var(--red); }
+.preview { font-family: var(--mono); display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 14px 0; text-align: center; font-size: .9rem; }
+.preview span { background: var(--paper); border-radius: 6px; padding: 6px 2px; }
+.hist { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .88rem; }
+.hist th, .hist td { padding: 7px 6px; text-align: right; border-bottom: 1px solid var(--line); }
+.hist th:nth-child(2), .hist td:nth-child(2) { text-align: left; font-family: var(--serif); }
+.hist td.neg { color: var(--red); } .hist td.pos { color: var(--ok); }
+.qr { background: #fff; padding: 12px; border-radius: 8px; width: max-content; margin: 10px auto; }
+.adj { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.adj input { font-family: var(--mono); text-align: center; }
+@media (max-width: 760px) { .start { grid-template-columns: 1fr; } .actions { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<header class="site-head"><div class="wrap">
+  <a href="/" aria-label="Beranda"><img src="/assets/logo-520.webp" alt="Zi Mo Mahjong" width="520" height="282"></a>
+  <nav><a href="/booking.html">Booking</a><a href="/skor.html" aria-current="page">Hitung poin</a><a href="/cek.html">Cek booking</a></nav>
+</div></header>
+
+<main class="wrap">
+  <!-- Mulai -->
+  <div id="v-start" class="hide">
+    <h1>Hitung poin</h1>
+    <p>Satu orang membuat room, yang lain gabung pakai kode atau scan QR. Semua HP melihat skor yang sama.</p>
+    <div class="start" style="margin-top:22px">
+      <form class="card" id="f-new">
+        <h2 style="color:var(--jade);font-size:1.3rem">Room baru</h2>
+        <label class="f"><span>Nama meja / permainan</span><input name="name" value="Meja 1" maxlength="40"></label>
+        <div class="pl4">
+          <label class="f"><span>東 Timur</span><input name="p0" placeholder="Pemain 1" maxlength="24"></label>
+          <label class="f"><span>南 Selatan</span><input name="p1" placeholder="Pemain 2" maxlength="24"></label>
+          <label class="f"><span>西 Barat</span><input name="p2" placeholder="Pemain 3" maxlength="24"></label>
+          <label class="f"><span>北 Utara</span><input name="p3" placeholder="Pemain 4" maxlength="24"></label>
+        </div>
+        <details>
+          <summary>Aturan poin</summary>
+          <p class="muted" style="font-size:.88rem">Nilai menang = poin dasar + (tai × poin per tai).<br>Zimo: tiga pemain lain masing-masing membayar nilai × pengali zimo.<br>Tembak: hanya pemain yang membuang ubin yang membayar nilai × pengali tembak.</p>
+          <div class="cfg">
+            <label class="f"><span>Poin dasar</span><input name="base" type="number" min="0" step="any" value="1"></label>
+            <label class="f"><span>Poin per tai</span><input name="per_tai" type="number" min="0" step="any" value="1"></label>
+            <label class="f"><span>Pengali zimo</span><input name="zimo_mult" type="number" min="0" step="any" value="1"></label>
+            <label class="f"><span>Pengali tembak</span><input name="tembak_mult" type="number" min="0" step="any" value="1"></label>
+            <label class="f"><span>Poin awal</span><input name="start" type="number" step="any" value="0"></label>
+          </div>
+        </details>
+        <button class="btn block">Buat room</button>
+      </form>
+      <div>
+        <form class="card" id="f-join">
+          <h2 style="color:var(--jade);font-size:1.3rem">Gabung room</h2>
+          <label class="f"><span>Kode room</span><input name="code" maxlength="5" autocapitalize="characters" placeholder="ABCDE" style="font-family:var(--mono);letter-spacing:.2em;text-transform:uppercase"></label>
+          <button class="btn jade block">Gabung</button>
+          <div class="recent" id="recent"></div>
+        </form>
+        <img src="/assets/panda/12.webp" alt="" style="width:200px;margin:20px auto 0">
+      </div>
+    </div>
+  </div>
+
+  <!-- Room -->
+  <div id="v-room" class="hide">
+    <div class="top">
+      <div class="grow"><div class="muted" style="color:var(--paper)" id="r-name"></div><span class="code" id="r-code"></span></div>
+      <button class="btn ghost small" id="b-share">Bagikan</button>
+      <button class="btn ghost small" id="b-edit">Atur</button>
+    </div>
+    <div id="share" class="card hide" style="margin-bottom:16px;text-align:center">
+      <p style="margin:0">Scan untuk gabung, atau masukkan kode <b class="mono" id="s-code"></b> di halaman Hitung poin.</p>
+      <div class="qr" id="qr"></div>
+      <button class="btn small jade" id="b-copy">Salin link</button>
+    </div>
+
+    <div class="felt" id="felt"><div class="seats" id="seats"></div></div>
+    <p class="center" id="pick-hint" style="margin:12px 0 0;min-height:1.6em"></p>
+
+    <div class="actions" id="actions">
+      <button class="btn" data-type="zimo">Zimo</button>
+      <button class="btn" data-type="tembak">Tembak</button>
+      <button class="btn jade" data-type="draw">Seri</button>
+      <button class="btn ghost" data-type="adjust">Manual</button>
+    </div>
+
+    <div class="card panel hide" id="panel">
+      <h3 id="p-title"></h3>
+      <div id="p-tai">
+        <p class="muted" style="margin:0 0 8px">Jumlah tai / fan</p>
+        <div class="stepper"><button class="btn ghost" type="button" data-d="-1" aria-label="Kurangi tai">−</button><output id="tai">0</output><button class="btn ghost" type="button" data-d="1" aria-label="Tambah tai">+</button></div>
+      </div>
+      <div id="p-adj" class="hide"><p class="muted" style="margin:0 0 8px">Isi perubahan poin tiap pemain (minus untuk mengurangi).</p><div class="adj" id="adj"></div></div>
+      <div class="preview" id="preview"></div>
+      <div class="row"><button class="btn grow" id="b-save">Simpan ronde</button><button class="btn ghost" id="b-cancel">Batal</button></div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div class="row" style="margin-bottom:8px"><h3 class="grow" style="margin:0">Riwayat ronde</h3><button class="btn ghost small" id="b-undo">Hapus ronde terakhir</button></div>
+      <div style="overflow-x:auto"><table class="hist" id="hist"></table></div>
+      <div class="row" style="margin-top:16px"><button class="btn jade small" id="b-finish">Selesai main</button><a class="btn ghost small" href="/skor.html" id="b-leave">Keluar room</a></div>
+    </div>
+
+    <form class="card hide" id="f-edit" style="margin-top:18px">
+      <h3>Atur room</h3>
+      <div class="pl4" id="e-players"></div>
+      <div class="cfg">
+        <label class="f"><span>Poin dasar</span><input name="base" type="number" min="0" step="any"></label>
+        <label class="f"><span>Poin per tai</span><input name="per_tai" type="number" min="0" step="any"></label>
+        <label class="f"><span>Pengali zimo</span><input name="zimo_mult" type="number" min="0" step="any"></label>
+        <label class="f"><span>Pengali tembak</span><input name="tembak_mult" type="number" min="0" step="any"></label>
+      </div>
+      <p class="muted" style="font-size:.85rem">Perubahan aturan berlaku untuk ronde berikutnya. Ronde yang sudah tercatat tidak berubah.</p>
+      <button class="btn">Simpan pengaturan</button>
+    </form>
+  </div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module" src="/js/skor.js"></script>
+</body>
+</html>

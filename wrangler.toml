@@ -1,9 +1,14 @@
 name = "zimo-mahjong"
-compatibility_date = "2024-09-23"
-pages_build_output_dir = "public"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
 
-# Database D1. Setelah menjalankan `npx wrangler d1 create zimo-db`,
-# ganti database_id di bawah dengan ID yang muncul.
+# File website (HTML, CSS, gambar)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Database D1. Buat dulu di dashboard Cloudflare (Storage & Databases > D1),
+# lalu ganti database_id di bawah dengan ID database tersebut.
 [[d1_databases]]
 binding = "DB"
 database_name = "zimo-db"
