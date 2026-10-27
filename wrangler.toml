@@ -7,4 +7,4 @@ pages_build_output_dir = "public"
 [[d1_databases]]
 binding = "DB"
 database_name = "zimo-db"
-database_id = "GANTI-DENGAN-DATABASE-ID"
+database_id = "3c56d69b-f5fc-4838-a63f-4c6c51b02636"
