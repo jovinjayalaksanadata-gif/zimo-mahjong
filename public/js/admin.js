@@ -327,7 +327,10 @@ function bookingAction(act, b, info) {
       <button class="btn">Simpan jadwal baru</button></form>`);
     $('#fr', d).addEventListener('submit', async (e) => {
       e.preventDefault(); const f = e.target;
-      try { await api(`/admin/bookings/${b.id}/reschedule`, { body: { date: f.date.value, hour: +f.hour.value, table_id: +f.table_id.value } }); toast('Jadwal diganti'); closeDlg(); route(); }
+      try {
+        const r = await api(`/admin/bookings/${b.id}/reschedule`, { body: { date: f.date.value, hour: +f.hour.value, table_id: +f.table_id.value } });
+        toast(r.extra_due > 0 ? `Jadwal diganti. Selisih ${rp(r.extra_due)} otomatis ditagih saat checkout.` : 'Jadwal diganti'); closeDlg(); route();
+      }
       catch (err) { toast(err.message, true); }
     });
   }
@@ -523,7 +526,10 @@ async function viewSettings() {
   main().innerHTML = `<h1>Pengaturan</h1>
     <form id="fs" style="margin-top:14px">
       <div class="panel"><h2>Harga meja</h2><div class="grid2">
-        ${F('price_per_hour', 'Harga per jam (Rp)', 'number')}
+        ${F('price_per_hour', 'Harga normal per jam (Rp)', 'number')}
+        ${F('happy_price', 'Harga happy hour per jam (Rp)', 'number', 'Isi 0 untuk mematikan happy hour.')}
+        ${F('happy_start', 'Happy hour mulai jam (0–23)', 'number', 'Contoh 10 = mulai pukul 10.00.')}
+        ${F('happy_end', 'Happy hour selesai jam (0–24)', 'number', 'Contoh 17 = berakhir pukul 17.00. Jam yang dimulai sebelum 17.00 kena harga happy hour.')}
         ${F('grace_minutes', 'Toleransi menit sebelum dihitung jam berikutnya', 'number', 'Contoh 5: main 1 jam 4 menit tetap dihitung 1 jam.')}
         ${F('package_hours', 'Paket: jumlah jam', 'number')}
         ${F('package_price', 'Paket: harga (Rp)', 'number', 'Isi 0 kalau tidak ada paket.')}
