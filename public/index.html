@@ -27,6 +27,11 @@
 .cloud.r1 { width: 320px; right: -80px; top: 90px; --from: 120px; transform: scaleX(-1); }
 .cloud.r2 { width: 200px; right: -30px; top: 330px; --from: 160px; animation-delay: .15s; }
 @keyframes drift { from { opacity: 0; translate: var(--from) 0; } to { opacity: 1; translate: 0 0; } }
+.hh-pill { display: inline-block; margin: 22px auto 0; padding: 8px 16px; border-radius: 999px; color: var(--jade-deep);
+  background: linear-gradient(#f3d58f, var(--gold)); box-shadow: 0 3px 0 #8a5d10; font-size: .95rem; }
+.hh-pill b { font-family: var(--serif); }
+.hh-row { display: flex; align-items: center; gap: 14px; margin: 22px 0 0; padding-top: 18px; border-top: 1px dashed var(--line); line-height: 1.35; color: var(--ink); }
+.hh-row .sticker { font-size: 2.4rem; line-height: 1; }
 .hero .sign { position: relative; width: 300px; margin: 34px auto 0; }
 .hero .sign img { width: 100%; }
 .hero .sign .price { position: absolute; left: 6%; right: 6%; bottom: 13%; height: 38%; display: grid; place-items: center;
@@ -84,6 +89,7 @@ section.block { padding: 72px 0 0; }
       <a class="btn" href="/booking.html">Booking meja</a>
       <a class="btn ghost" href="/skor.html">Hitung poin</a>
     </div>
+    <p class="hh-pill hide" data-hh>Happy hour <b class="hhp">30K</b>/jam · setiap hari <span class="hht">10.00–17.00</span></p>
     <div class="sign">
       <img src="/assets/panda/13.webp" alt="Panda Zi Mo memegang papan harga" width="344" height="267">
       <div class="price"><div><span class="hp">50K</span><small>per jam</small></div></div>
@@ -95,12 +101,13 @@ section.block { padding: 72px 0 0; }
   <div class="price-grid">
     <div class="frame"><span class="c1"></span><span class="c2"></span>
       <p class="big-price sticker"><span class="hp">50K</span><span class="per">per jam, per meja</span></p>
+      <p class="hh-row hide" data-hh><span class="sticker hhp">30K</span><span>happy hour<br><b class="hht">10.00–17.00</b> setiap hari</span></p>
       <p class="muted pkg hide" style="margin-top:18px"></p>
     </div>
     <div>
       <h2>Sebelum datang</h2>
       <ul class="rules">
-        <li>Satu meja untuk 4 pemain, mesin mahjong otomatis.</li>
+        <li><span data-tables>10</span> meja dengan mesin mahjong otomatis, masing-masing untuk 4 pemain.</li>
         <li>Dihitung per jam penuh. Lewat sedikit dari satu jam dihitung jam berikutnya.</li>
         <li>Booking online dibayar penuh di depan supaya meja tertahan untukmu.</li>
         <li>Tidak ada refund, tapi jadwal bisa diganti paling lambat H-1.</li>
@@ -158,10 +165,17 @@ section.block { padding: 72px 0 0; }
 import { api, rp } from '/js/common.js';
 document.getElementById('yr').textContent = new Date().getFullYear();
 try {
-  const { settings: s } = await api('/public/info');
+  const { settings: s, tables } = await api('/public/info');
+  document.querySelectorAll('[data-tables]').forEach((el) => (el.textContent = tables.length));
   document.querySelectorAll('[data-k]').forEach((el) => { if (s[el.dataset.k]) el.textContent = s[el.dataset.k]; });
   const k = Math.round(+s.price_per_hour / 1000);
   document.querySelectorAll('.hp').forEach((el) => (el.textContent = k + 'K'));
+  if (+s.happy_price > 0) {
+    const p2 = (n) => String(n).padStart(2, '0');
+    document.querySelectorAll('.hhp').forEach((el) => (el.textContent = Math.round(+s.happy_price / 1000) + 'K'));
+    document.querySelectorAll('.hht').forEach((el) => (el.textContent = `${p2(s.happy_start)}.00–${p2(s.happy_end)}.00`));
+    document.querySelectorAll('[data-hh]').forEach((el) => el.classList.remove('hide'));
+  }
   if (+s.package_price > 0) { const p = document.querySelector('.pkg'); p.textContent = `Paket ${s.package_hours} jam: ${rp(s.package_price)}`; p.classList.remove('hide'); }
   document.querySelector('[data-wa]').href = 'https://wa.me/' + s.whatsapp;
   document.querySelector('[data-wa]').textContent = '+' + s.whatsapp;

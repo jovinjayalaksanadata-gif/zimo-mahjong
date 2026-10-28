@@ -24,6 +24,10 @@ main { padding-top: 40px; }
 .hours { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px 8px; }
 .hours .tile { padding: 14px 0 12px; font-size: 1rem; }
 .hours .tile small { display: block; font-size: .65rem; opacity: .7; margin-top: 3px; }
+.hours .tile.hh:not(.back):not(.past) { box-shadow: 0 3px 0 var(--gold), 0 5px 0 #9a6a14, 0 8px 14px rgba(120, 80, 10, .22); }
+.hours .tile.hh:not(.back):not(.past) small { color: #9a6a14; opacity: 1; font-weight: 700; }
+.hours .tile.hh[aria-pressed='true'] { box-shadow: 0 3px 0 var(--red), 0 5px 0 var(--red-deep), 0 8px 14px rgba(120, 6, 3, .3); }
+.hh-note { display: inline-block; background: #fbecc8; color: #6b4a0c; padding: 6px 12px; border-radius: 999px; font-size: .9rem; margin: 6px 0 0; }
 .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: .85rem; color: var(--muted); margin: 18px 0 0; }
 .legend i { display: inline-block; width: 16px; height: 20px; border-radius: 3px; vertical-align: -5px; margin-right: 6px; }
 .durs { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -51,7 +55,8 @@ aside { position: sticky; top: 16px; }
 <main class="wrap">
   <div id="form-view">
     <h1>Booking meja</h1>
-    <p class="muted">Rp<span class="num" id="rate">50.000</span> per jam per meja. Dibayar penuh, jadwal bisa diganti paling lambat H-1.</p>
+    <p class="muted" style="margin-bottom:4px">Rp<span class="num" id="rate">50.000</span> per jam per meja. Dibayar penuh, jadwal bisa diganti paling lambat H-1.</p>
+    <p class="hh-note hide" id="hh-note"></p>
     <div class="layout" style="margin-top:28px">
       <div>
         <section class="step">
@@ -69,6 +74,7 @@ aside { position: sticky; top: 16px; }
             <span><i style="background:#fbf5e4;box-shadow:0 2px 0 var(--jade)"></i>Kosong</span>
             <span><i style="background:var(--jade)"></i>Terisi</span>
             <span><i style="background:#f8dcd2;box-shadow:0 2px 0 var(--red)"></i>Pilihanmu</span>
+            <span class="hide" id="lg-hh"><i style="background:#fbf5e4;box-shadow:0 2px 0 var(--gold)"></i>Happy hour</span>
           </div>
         </section>
         <section class="step">

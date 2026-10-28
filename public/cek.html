@@ -95,8 +95,9 @@ $('#resch').addEventListener('submit', async (e) => {
   e.preventDefault();
   const r = e.target;
   try {
-    await api('/bookings/reschedule', { body: { code: cur.booking.code, phone: f.phone.value, date: r.date.value, hour: +r.hour.value, table_id: +r.table_id.value } });
-    toast('Jadwal baru tersimpan'); look();
+    const res = await api('/bookings/reschedule', { body: { code: cur.booking.code, phone: f.phone.value, date: r.date.value, hour: +r.hour.value, table_id: +r.table_id.value } });
+    toast(res.extra_due > 0 ? `Jadwal baru tersimpan. Ada selisih ${rp(res.extra_due)} karena di luar happy hour, dibayar di kasir.` : 'Jadwal baru tersimpan');
+    look();
   } catch (err) { toast(err.message, true); }
 });
 if (p.get('code')) look();
