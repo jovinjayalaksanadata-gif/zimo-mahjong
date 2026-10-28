@@ -57,10 +57,27 @@ async function getSettings(db) {
   const { results } = await db.prepare('SELECT key, value FROM settings').all();
   return Object.fromEntries(results.map((r) => [r.key, r.value]));
 }
-function tablePrice(hours, s) {
-  const rate = int(s.price_per_hour), ph = int(s.package_hours), pp = int(s.package_price);
-  if (pp > 0 && ph > 0) { const k = Math.floor(hours / ph); return k * pp + (hours - k * ph) * rate; }
-  return hours * rate;
+// Tarif per jam tergantung jam mulai blok tersebut (WIB): happy hour [happy_start, happy_end) pakai happy_price.
+function rateAt(ts, s) {
+  const h = Math.floor((((ts % 86400) + 86400) % 86400) / 3600);
+  const hp = int(s.happy_price), hs = int(s.happy_start, -1), he = int(s.happy_end, -1);
+  if (hp > 0 && hs >= 0 && he > hs && h >= hs && h < he) return hp;
+  return int(s.price_per_hour);
+}
+// Harga jam ke-[from, to) dihitung dari waktu mulai `start`.
+function priceRange(start, from, to, s) {
+  let sum = 0;
+  for (let i = from; i < to; i++) sum += rateAt(start + i * 3600, s);
+  return sum;
+}
+function tablePrice(start, hours, s) {
+  let sum = priceRange(start, 0, hours, s);
+  const ph = int(s.package_hours), pp = int(s.package_price);
+  if (pp > 0 && ph > 0 && hours >= ph) {
+    const k = Math.floor(hours / ph);
+    sum = Math.min(sum, k * pp + priceRange(start, k * ph, hours, s)); // pakai yang lebih murah untuk pelanggan
+  }
+  return sum;
 }
 async function audit(db, user, action, entity, entityId, detail) {
   await db.prepare('INSERT INTO audit_log(ts,user_id,user_name,action,entity,entity_id,detail) VALUES (?,?,?,?,?,?,?)')
@@ -216,7 +233,7 @@ route('POST', '/auth/password', async ({ db, user, body }) => {
 });
 
 // ===== Publik: info & ketersediaan =====
-const PUBLIC_KEYS = ['business_name', 'tagline', 'address', 'maps_url', 'whatsapp', 'instagram', 'price_per_hour',
+const PUBLIC_KEYS = ['business_name', 'tagline', 'address', 'maps_url', 'whatsapp', 'instagram', 'price_per_hour', 'happy_price', 'happy_start', 'happy_end',
   'package_hours', 'package_price', 'hold_minutes', 'max_booking_hours', 'max_days_ahead', 'payment_info'];
 route('GET', '/public/info', async ({ db }) => {
   const s = await getSettings(db);
@@ -265,7 +282,7 @@ route('POST', '/bookings', async ({ db, body }) => {
   const end = start + hours * 3600;
   const tableId = int(body.table_id);
   await checkSlot(db, tableId, start, end);
-  const total = tablePrice(hours, s);
+  const total = tablePrice(start, hours, s);
   const code = 'ZM-' + randCode(6);
   const expires = now + int(s.hold_minutes, 60) * 60;
   await db.prepare(`INSERT INTO bookings(code,customer_name,phone,table_id,start_ts,end_ts,hours,total,status,source,expires_at,note,created_at)
@@ -304,10 +321,13 @@ route('POST', '/bookings/reschedule', async ({ db, body }) => {
   const tableId = int(body.table_id, b.table_id);
   const end = start + b.hours * 3600;
   await checkSlot(db, tableId, start, end, b.id);
-  await db.prepare('UPDATE bookings SET start_ts=?, end_ts=?, table_id=?, reschedule_count=reschedule_count+1 WHERE id=?')
-    .bind(start, end, tableId, b.id).run();
-  await audit(db, null, 'booking_reschedule_customer', 'booking', b.code, { from: b.start_ts, to: start, tableId });
-  return json({ ok: true });
+  const s = await getSettings(db);
+  const newTotal = tablePrice(start, b.hours, s);
+  const total = b.paid ? b.total : newTotal;
+  await db.prepare('UPDATE bookings SET start_ts=?, end_ts=?, table_id=?, total=?, reschedule_count=reschedule_count+1 WHERE id=?')
+    .bind(start, end, tableId, total, b.id).run();
+  await audit(db, null, 'booking_reschedule_customer', 'booking', b.code, { from: b.start_ts, to: start, tableId, newTotal });
+  return json({ ok: true, total, extra_due: b.paid ? Math.max(0, newTotal - b.total) : 0 });
 });
 
 // ===== Admin: booking =====
@@ -329,7 +349,7 @@ route('POST', '/admin/bookings', async ({ db, user, body }) => {
   const start = parseDate(body.date) + h * 3600, end = start + hours * 3600;
   const tableId = int(body.table_id);
   await checkSlot(db, tableId, start, end);
-  const total = tablePrice(hours, s);
+  const total = tablePrice(start, hours, s);
   const code = 'ZM-' + randCode(6);
   const r = await db.prepare(`INSERT INTO bookings(code,customer_name,phone,table_id,start_ts,end_ts,hours,total,status,source,note,created_at,created_by)
      VALUES (?,?,?,?,?,?,?,?,'confirmed','staff',?,?,?)`)
@@ -381,10 +401,13 @@ route('POST', '/admin/bookings/:id/reschedule', async ({ db, user, params, body 
   const start = parseDate(body.date) + h * 3600, end = start + b.hours * 3600;
   const tableId = int(body.table_id, b.table_id);
   await checkSlot(db, tableId, start, end, b.id);
-  await db.prepare('UPDATE bookings SET start_ts=?, end_ts=?, table_id=?, reschedule_count=reschedule_count+1 WHERE id=?')
-    .bind(start, end, tableId, b.id).run();
-  await audit(db, user, 'booking_reschedule', 'booking', b.code, { from: b.start_ts, to: start, tableId });
-  return json({ ok: true });
+  const s = await getSettings(db);
+  const newTotal = tablePrice(start, b.hours, s);
+  const total = b.paid ? b.total : newTotal;
+  await db.prepare('UPDATE bookings SET start_ts=?, end_ts=?, table_id=?, total=?, reschedule_count=reschedule_count+1 WHERE id=?')
+    .bind(start, end, tableId, total, b.id).run();
+  await audit(db, user, 'booking_reschedule', 'booking', b.code, { from: b.start_ts, to: start, tableId, newTotal });
+  return json({ ok: true, total, extra_due: b.paid ? Math.max(0, newTotal - b.total) : 0 });
 });
 route('POST', '/admin/bookings/:id/noshow', async ({ db, user, params }) => {
   need(user);
@@ -399,16 +422,19 @@ route('POST', '/admin/bookings/:id/noshow', async ({ db, user, params }) => {
 async function sessionBill(db, sess, s, at = nowWib()) {
   const mins = Math.max(0, (at - sess.started_at) / 60);
   let hours = Math.max(1, Math.ceil((mins - int(s.grace_minutes, 0)) / 60));
-  let amount = tablePrice(hours, s), prepaidHours = 0, label = `Main meja (${hours} jam)`;
+  let amount = tablePrice(sess.started_at, hours, s), prepaidHours = 0, label = `Main meja (${hours} jam)`;
   if (sess.booking_id) {
-    const b = await db.prepare('SELECT hours, paid, code FROM bookings WHERE id=?').bind(sess.booking_id).first();
+    const b = await db.prepare('SELECT hours, paid, code, start_ts, total FROM bookings WHERE id=?').bind(sess.booking_id).first();
     if (b) {
       hours = Math.max(hours, b.hours);
       if (b.paid) {
         prepaidHours = b.hours;
-        amount = tablePrice(hours, s) - tablePrice(b.hours, s);
-        label = hours > b.hours ? `Tambahan jam (${hours - b.hours} jam, booking ${b.code})` : `Booking ${b.code} (lunas)`;
-      } else { amount = tablePrice(hours, s); label = `Main meja (${hours} jam, booking ${b.code})`; }
+        // booking sudah dibayar sebesar b.total. Yang ditagih: jam tambahan, plus selisih bila jadwal
+        // dipindah ke jam yang lebih mahal (mis. dari happy hour ke jam normal).
+        amount = Math.max(0, tablePrice(b.start_ts, hours, s) - b.total);
+        label = hours > b.hours ? `Tambahan jam (${hours - b.hours} jam, booking ${b.code})`
+          : amount > 0 ? `Selisih harga jadwal baru (booking ${b.code})` : `Booking ${b.code} (lunas)`;
+      } else { amount = tablePrice(b.start_ts, hours, s); label = `Main meja (${hours} jam, booking ${b.code})`; }
     }
   }
   return { minutes: Math.floor(mins), hours, prepaidHours, amount, label };
@@ -710,7 +736,7 @@ route('GET', '/admin/settings', async ({ db, user }) => {
   const { results: tables } = await db.prepare('SELECT * FROM tables_ ORDER BY sort, id').all();
   return json({ settings: await getSettings(db), tables });
 });
-const EDITABLE = ['business_name', 'tagline', 'address', 'maps_url', 'whatsapp', 'instagram', 'price_per_hour', 'package_hours',
+const EDITABLE = ['business_name', 'tagline', 'address', 'maps_url', 'whatsapp', 'instagram', 'price_per_hour', 'happy_price', 'happy_start', 'happy_end', 'package_hours',
   'package_price', 'grace_minutes', 'hold_minutes', 'max_booking_hours', 'max_days_ahead', 'payment_info', 'receipt_footer'];
 route('PUT', '/admin/settings', async ({ db, user, body }) => {
   need(user, 'superadmin');

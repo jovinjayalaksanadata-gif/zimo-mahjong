@@ -51,20 +51,28 @@ export const SCHEMA = [
      ('tagline','Mahjong lounge · buka 24 jam'),
      ('address','Apartemen B Residence, Ground Floor, BSD'),
      ('maps_url',''),
-     ('whatsapp','628xxxxxxxxxx'),
+     ('whatsapp','6285110523398'),
      ('instagram','zimo_mahjong'),
      ('price_per_hour','50000'),
      ('package_hours','3'),
      ('package_price','0'),
+     ('happy_price','30000'),
+     ('happy_start','10'),
+     ('happy_end','17'),
      ('grace_minutes','5'),
      ('hold_minutes','60'),
      ('max_booking_hours','8'),
      ('max_days_ahead','30'),
      ('payment_info','Transfer BCA 1234567890 a.n. Zi Mo Mahjong\nAtau scan QRIS di kasir / minta via WhatsApp'),
      ('receipt_footer','Terima kasih sudah bermain di Zi Mo Mahjong!')`,
-  `INSERT INTO tables_(name, sort) SELECT 'Meja 1',1 WHERE NOT EXISTS (SELECT 1 FROM tables_)`,
-  `INSERT INTO tables_(name, sort) SELECT 'Meja 2',2 WHERE (SELECT COUNT(*) FROM tables_)=1`,
-  `INSERT INTO tables_(name, sort) SELECT 'Meja 3',3 WHERE (SELECT COUNT(*) FROM tables_)=2`,
+  // Migrasi v2 (sekali jalan): 10 meja, nomor WhatsApp admin. Ditandai dengan settings.migr_v2.
+  `INSERT INTO tables_(name, sort)
+     WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 10)
+     SELECT 'Meja ' || n, n FROM c
+     WHERE n > (SELECT COUNT(*) FROM tables_) AND NOT EXISTS (SELECT 1 FROM settings WHERE key = 'migr_v2')`,
+  `UPDATE settings SET value = '6285110523398'
+     WHERE key = 'whatsapp' AND value = '628xxxxxxxxxx' AND NOT EXISTS (SELECT 1 FROM settings WHERE key = 'migr_v2')`,
+  `INSERT OR IGNORE INTO settings(key, value) VALUES ('migr_v2', '1')`,
   `INSERT INTO menu_items(name,category,price) SELECT * FROM (
      SELECT 'Es Teh Manis','Minuman',8000 UNION ALL SELECT 'Kopi Susu','Minuman',18000 UNION ALL
      SELECT 'Air Mineral','Minuman',6000 UNION ALL SELECT 'Kentang Goreng','Makanan',20000 UNION ALL
