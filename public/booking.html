@@ -37,7 +37,8 @@ aside { position: sticky; top: 16px; }
 .done { max-width: 620px; margin: 0 auto; text-align: center; }
 .code { font: 600 clamp(2rem, 7vw, 3rem)/1 var(--mono); letter-spacing: .06em; color: var(--red); margin: 8px 0 18px; }
 .payinfo { white-space: pre-line; text-align: left; background: var(--paper); padding: 16px 18px; border-radius: 8px; margin: 18px 0; }
-@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } aside { position: static; } }
+@media (max-width: 1100px) { .layout { grid-template-columns: minmax(0,1fr) 300px; gap: 24px; } .hours { grid-template-columns: repeat(6, 1fr); } }
+@media (max-width: 720px) { .layout { grid-template-columns: 1fr; } aside { position: static; } }
 @media (max-width: 520px) { .hours { grid-template-columns: repeat(6, 1fr); } }
 </style>
 </head>
