@@ -32,8 +32,10 @@
   <aside class="side">
     <img src="/assets/logo-520.webp" alt="Zi Mo Mahjong" class="side-logo">
     <nav id="nav"></nav>
-    <div class="me"><div id="me-name"></div><span class="pill" id="me-role"></span>
-      <div class="row" style="margin-top:8px;gap:8px"><button class="link" id="b-pass">Ganti password</button><button class="link" id="b-logout">Keluar</button></div></div>
+    <details class="me" id="me">
+      <summary><span class="me-av" id="me-av" aria-hidden="true"></span><span class="me-txt"><span id="me-name"></span><span class="pill" id="me-role"></span></span></summary>
+      <div class="me-menu"><button class="link" id="b-pass">Ganti password</button><button class="link" id="b-logout">Keluar</button></div>
+    </details>
   </aside>
   <main class="main" id="main"></main>
 </div>
