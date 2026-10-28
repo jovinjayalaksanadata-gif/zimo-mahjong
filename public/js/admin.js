@@ -55,6 +55,7 @@ $('#f-login').addEventListener('submit', async (e) => {
 });
 $('#b-logout').addEventListener('click', async () => { await api('/auth/logout', { method: 'POST' }).catch(() => {}); me = null; location.hash = ''; boot(); });
 $('#b-pass').addEventListener('click', () => {
+  $('#me').open = false;
   const b = openDlg(`<h2>Ganti password</h2><form id="fp">
     <label class="f"><span>Password lama</span><input name="old" type="password" required autocomplete="current-password"></label>
     <label class="f"><span>Password baru (min. 8 karakter)</span><input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
@@ -69,20 +70,37 @@ $('#b-pass').addEventListener('click', () => {
 function startApp() {
   $('#auth').classList.add('hide'); $('#app').classList.remove('hide');
   $('#me-name').textContent = me.name; $('#me-role').textContent = ROLE[me.role];
+  $('#me-av').textContent = (me.name || '?').trim().charAt(0).toUpperCase();
   $('#nav').innerHTML = VIEWS.filter((v) => v.show()).map((v) => `<a href="#${v.id}" data-v="${v.id}">${v.label}</a>`).join('');
   route();
 }
 window.addEventListener('hashchange', route);
+document.addEventListener('click', (e) => { if (!e.target.closest('#me')) $('#me').open = false; });
 async function route() {
   if (!me) return;
   clearInterval(timer);
   const id = (location.hash.slice(1) || 'pos').split('?')[0];
   const v = VIEWS.find((x) => x.id === id && x.show()) || VIEWS[0];
   $$('#nav a').forEach((a) => a.toggleAttribute('aria-current', a.dataset.v === v.id));
-  try { await v.render(); } catch (e) {
+  $('#me').open = false;
+  try { await v.render(); stackTables(); $('#nav a[aria-current]')?.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {
     if (e.status === 401) { me = null; return boot(); }
     main().innerHTML = `<div class="panel"><p>${esc(e.message)}</p></div>`;
   }
+}
+
+// Di layar kecil, tabel ditampilkan sebagai kartu: setiap sel diberi label dari judul kolomnya.
+function stackTables(root = document) {
+  $$('table.t', root).forEach((t) => {
+    const heads = $$('thead th', t).map((th) => th.textContent.trim());
+    if (!heads.length) return;
+    t.classList.add('stack');
+    $$('tbody tr', t).forEach((tr) => $$('td', tr).forEach((td, i) => {
+      if (td.colSpan > 1) td.classList.add('full');
+      else if (heads[i]) td.dataset.label = heads[i];
+      else td.classList.add('act');
+    }));
+  });
 }
 
 // =====================================================================
