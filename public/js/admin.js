@@ -1,4 +1,6 @@
 import { api, rp, pad, toast, $, $$, esc, fmtDate, fmtTime, fmtDT, fmtShort, todayIso, addDays, wibNow, STATUS, METHOD, waLink } from './common.js';
+const durTxt = (sec) => { const m = Math.round(sec / 60), h = Math.floor(m / 60), r = m % 60; return [h ? h + ' jam' : '', r ? r + ' menit' : ''].filter(Boolean).join(' ') || '0 menit'; };
+const spanMin = (a, b) => { const [ah, am] = a.split(':').map(Number), [bh, bm] = b.split(':').map(Number); let d = bh * 60 + bm - (ah * 60 + am); if (d <= 0) d += 1440; return d; };
 
 let me = null, timer = null;
 const ROLE = { superadmin: 'Superadmin', admin: 'Admin', kasir: 'Kasir' };
@@ -124,7 +126,7 @@ async function viewPos() {
 function tableCard(t) {
   const s = t.session;
   const next = t.upcoming[0];
-  const nextHtml = next ? `<div class="next">Berikutnya: <b>${fmtTime(next.start_ts)}</b> ${esc(next.customer_name)} (${next.hours} jam)${next.status === 'pending' ? ' · belum bayar' : ''}</div>` : '';
+  const nextHtml = next ? `<div class="next">Berikutnya: <b>${fmtTime(next.start_ts)}</b> ${esc(next.customer_name)} (${durTxt(next.end_ts - next.start_ts)})${next.status === 'pending' ? ' · belum bayar' : ''}</div>` : '';
   if (s) return `<button class="tcard busy" data-id="${t.id}"><span class="tn">${esc(t.name)}</span>
     <span class="timer" data-start="${s.started_at}">0:00:00</span>
     <span class="sub">${esc(s.customer_name)} · mulai ${fmtTime(s.started_at)}</span>
@@ -168,7 +170,7 @@ async function sessionDialog(t) {
   const fnbTotal = fnb.reduce((a, i) => a + i.total, 0);
   let method = 'cash';
   const b = openDlg(`<h2>${esc(t.name)} · ${esc(s.customer_name)}</h2>
-    <p class="muted">Mulai ${fmtTime(s.started_at)} · berjalan ${Math.floor(bill.minutes / 60)} jam ${bill.minutes % 60} menit · ditagih <b>${bill.hours} jam</b></p>
+    <p class="muted">Mulai ${fmtTime(s.started_at)} · berjalan ${Math.floor(bill.minutes / 60)} jam ${bill.minutes % 60} menit · ditagih <b>${bill.billed_label || bill.hours + ' jam'}</b></p>
     <h3 style="margin-top:14px">Tambah pesanan</h3>
     <div class="menu-grid">${posData.menu.map((m) => `<button type="button" class="tile" data-m="${m.id}">${esc(m.name)}<b>${rp(m.price)}</b></button>`).join('')}</div>
     <table class="lines"><tbody>
@@ -319,16 +321,16 @@ function bookingAction(act, b, info) {
     $('#ok', d).addEventListener('click', async () => { try { await api(`/admin/bookings/${b.id}/confirm`, { body: { method: m } }); toast('Booking lunas'); closeDlg(); route(); } catch (e) { toast(e.message, true); } });
   }
   if (act === 'resch') {
-    const sh = new Date(b.start_ts * 1000).getUTCHours();
     const d = openDlg(`<h2>Ganti jadwal ${esc(b.code)}</h2><form id="fr">
       <label class="f"><span>Tanggal</span><input type="date" name="date" value="${new Date(b.start_ts * 1000).toISOString().slice(0, 10)}" required></label>
       <label class="f"><span>Meja</span><select name="table_id">${info.tables.map((t) => `<option value="${t.id}" ${t.id === b.table_id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select></label>
-      <label class="f"><span>Jam mulai</span><select name="hour">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${h === sh ? 'selected' : ''}>${pad(h)}.00</option>`).join('')}</select></label>
+      <label class="f"><span>Jam mulai</span><input type="time" name="time" step="60" value="${fmtTime(b.start_ts).replace('.', ':')}" required></label>
+      <p class="muted">Lama main tetap ${durTxt(b.end_ts - b.start_ts)}.</p>
       <button class="btn">Simpan jadwal baru</button></form>`);
     $('#fr', d).addEventListener('submit', async (e) => {
       e.preventDefault(); const f = e.target;
       try {
-        const r = await api(`/admin/bookings/${b.id}/reschedule`, { body: { date: f.date.value, hour: +f.hour.value, table_id: +f.table_id.value } });
+        const r = await api(`/admin/bookings/${b.id}/reschedule`, { body: { date: f.date.value, time: f.time.value, table_id: +f.table_id.value } });
         toast(r.extra_due > 0 ? `Jadwal diganti. Selisih ${rp(r.extra_due)} otomatis ditagih saat checkout.` : 'Jadwal diganti'); closeDlg(); route();
       }
       catch (err) { toast(err.message, true); }
@@ -350,15 +352,15 @@ function newBookingDialog(info, date) {
     <label class="f"><span>Nomor WhatsApp</span><input name="phone" type="tel"></label>
     <div class="grid2"><label class="f"><span>Tanggal</span><input type="date" name="date" value="${date}" required></label>
     <label class="f"><span>Meja</span><select name="table_id">${info.tables.map((t) => `<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select></label>
-    <label class="f"><span>Jam mulai</span><select name="hour">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${h === 19 ? 'selected' : ''}>${pad(h)}.00</option>`).join('')}</select></label>
-    <label class="f"><span>Durasi (jam)</span><input name="hours" type="number" min="1" max="24" value="3" required></label></div>
+    <label class="f"><span>Jam mulai</span><input type="time" name="time" step="60" value="19:00" required></label>
+    <label class="f"><span>Jam selesai</span><input type="time" name="end" step="60" value="22:00" required></label></div>
     <label class="f"><span>Pembayaran</span><select name="paid_method"><option value="">Belum bayar</option>${Object.entries(METHOD).map(([k, v]) => `<option value="${k}">Sudah bayar · ${v}</option>`).join('')}</select></label>
     <label class="f"><span>Catatan</span><input name="note" maxlength="300"></label>
     <button class="btn">Simpan booking</button></form>`);
   $('#fn', d).addEventListener('submit', async (e) => {
     e.preventDefault(); const f = e.target;
     try {
-      const r = await api('/admin/bookings', { body: { name: f.name.value, phone: f.phone.value, date: f.date.value, table_id: +f.table_id.value, hour: +f.hour.value, hours: +f.hours.value, paid_method: f.paid_method.value || undefined, note: f.note.value } });
+      const r = await api('/admin/bookings', { body: { name: f.name.value, phone: f.phone.value, date: f.date.value, table_id: +f.table_id.value, time: f.time.value, minutes: spanMin(f.time.value, f.end.value), paid_method: f.paid_method.value || undefined, note: f.note.value } });
       toast('Booking ' + r.code + ' tersimpan'); closeDlg(); location.hash = '#booking?d=' + f.date.value; route();
     } catch (err) { toast(err.message, true); }
   });
@@ -536,6 +538,7 @@ async function viewSettings() {
       </div></div>
       <div class="panel"><h2>Booking online</h2><div class="grid2">
         ${F('hold_minutes', 'Batas waktu bayar (menit)', 'number', 'Booking yang belum dibayar akan dilepas setelah waktu ini.')}
+        ${F('min_booking_minutes', 'Minimal durasi booking online (menit)', 'number', 'Contoh 60 = minimal 1 jam.')}
         ${F('max_booking_hours', 'Maksimal durasi per booking (jam)', 'number')}
         ${F('max_days_ahead', 'Bisa booking berapa hari ke depan', 'number')}
       </div>${F('payment_info', 'Instruksi pembayaran (rekening / QRIS)', 'area')}</div>
