@@ -57,27 +57,53 @@ async function getSettings(db) {
   const { results } = await db.prepare('SELECT key, value FROM settings').all();
   return Object.fromEntries(results.map((r) => [r.key, r.value]));
 }
-// Tarif per jam tergantung jam mulai blok tersebut (WIB): happy hour [happy_start, happy_end) pakai happy_price.
+// Tarif per jam pada detik `ts` (WIB): happy hour [happy_start, happy_end) pakai happy_price.
 function rateAt(ts, s) {
   const h = Math.floor((((ts % 86400) + 86400) % 86400) / 3600);
   const hp = int(s.happy_price), hs = int(s.happy_start, -1), he = int(s.happy_end, -1);
   if (hp > 0 && hs >= 0 && he > hs && h >= hs && h < he) return hp;
   return int(s.price_per_hour);
 }
-// Harga jam ke-[from, to) dihitung dari waktu mulai `start`.
-function priceRange(start, from, to, s) {
+// Harga dihitung per menit: tiap menit kena tarif jam dinding menit itu.
+function minutePrice(start, mins, s) {
   let sum = 0;
-  for (let i = from; i < to; i++) sum += rateAt(start + i * 3600, s);
+  for (let i = 0; i < mins; i++) sum += rateAt(start + i * 60, s) / 60;
   return sum;
 }
-function tablePrice(start, hours, s) {
-  let sum = priceRange(start, 0, hours, s);
-  const ph = int(s.package_hours), pp = int(s.package_price);
-  if (pp > 0 && ph > 0 && hours >= ph) {
-    const k = Math.floor(hours / ph);
-    sum = Math.min(sum, k * pp + priceRange(start, k * ph, hours, s)); // pakai yang lebih murah untuk pelanggan
+function tablePriceMin(start, mins, s) {
+  mins = Math.max(0, Math.round(mins));
+  let sum = minutePrice(start, mins, s);
+  const pm = int(s.package_hours) * 60, pp = int(s.package_price);
+  if (pp > 0 && pm > 0 && mins >= pm) {
+    const k = Math.floor(mins / pm);
+    sum = Math.min(sum, k * pp + minutePrice(start + k * pm * 60, mins - k * pm, s)); // pakai yang lebih murah untuk pelanggan
   }
-  return sum;
+  return Math.round(sum / 500) * 500;
+}
+const tablePrice = (start, hours, s) => tablePriceMin(start, hours * 60, s);
+const bookingMins = (b) => Math.round((b.end_ts - b.start_ts) / 60);
+function durLabel(mins) {
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return [h ? `${h} jam` : '', m ? `${m} menit` : ''].filter(Boolean).join(' ') || '0 menit';
+}
+// Jam mulai: body.time "HH:MM" (menit bebas) atau body.hour (format lama). Hasil: menit sejak 00.00.
+function parseStartMin(body) {
+  const m = /^(\d{1,2})[:.](\d{2})$/.exec(String(body.time ?? '').trim());
+  if (m) {
+    const h = +m[1], mi = +m[2];
+    if (h > 23 || mi > 59) fail('Jam tidak valid');
+    return h * 60 + mi;
+  }
+  const h = int(body.hour, -1); if (h < 0 || h > 23) fail('Jam tidak valid');
+  return h * 60;
+}
+// Durasi: body.minutes, atau body.hours (format lama).
+function parseDurMin(body, s, max) {
+  const mins = body.minutes != null ? int(body.minutes) : Math.round(Number(body.hours) * 60);
+  const min = int(s.min_booking_minutes, 60);
+  if (!Number.isFinite(mins) || mins < min) fail(`Minimal main ${durLabel(min)}`);
+  if (mins > max) fail(`Maksimal ${durLabel(max)} per booking`);
+  return mins;
 }
 async function audit(db, user, action, entity, entityId, detail) {
   await db.prepare('INSERT INTO audit_log(ts,user_id,user_name,action,entity,entity_id,detail) VALUES (?,?,?,?,?,?,?)')
@@ -234,7 +260,7 @@ route('POST', '/auth/password', async ({ db, user, body }) => {
 
 // ===== Publik: info & ketersediaan =====
 const PUBLIC_KEYS = ['business_name', 'tagline', 'address', 'maps_url', 'whatsapp', 'instagram', 'price_per_hour', 'happy_price', 'happy_start', 'happy_end',
-  'package_hours', 'package_price', 'hold_minutes', 'max_booking_hours', 'max_days_ahead', 'payment_info'];
+  'package_hours', 'package_price', 'hold_minutes', 'min_booking_minutes', 'max_booking_hours', 'max_days_ahead', 'payment_info'];
 route('GET', '/public/info', async ({ db }) => {
   const s = await getSettings(db);
   const { results: tables } = await db.prepare('SELECT id, name FROM tables_ WHERE active=1 ORDER BY sort, id').all();
@@ -243,7 +269,7 @@ route('GET', '/public/info', async ({ db }) => {
 route('GET', '/availability', async ({ db, q }) => {
   await expirePending(db);
   const day = parseDate(q.get('date'));
-  const end = day + 86400;
+  const end = day + 2 * 86400; // ikut hari berikutnya: booking bisa lewat tengah malam
   const { results: tables } = await db.prepare('SELECT id, name FROM tables_ WHERE active=1 ORDER BY sort, id').all();
   const { results: bks } = await db.prepare(
     "SELECT table_id, start_ts, end_ts FROM bookings WHERE status IN ('pending','confirmed') AND start_ts < ? AND end_ts > ?"
@@ -260,7 +286,10 @@ route('GET', '/availability', async ({ db, q }) => {
       else if (s < now + 3600 && open.some((o) => o.table_id === t.id)) st = 'booked';
       busy.push(st);
     }
-    return { id: t.id, name: t.name, hours: busy };
+    // interval terisi (detik WIB) untuk tampilan jam bebas
+    const iv = bks.filter((b) => b.table_id === t.id).map((b) => [b.start_ts, b.end_ts]);
+    if (open.some((o) => o.table_id === t.id)) iv.push([now - 60, now + 3600]);
+    return { id: t.id, name: t.name, hours: busy, busy: iv.sort((a, b) => a[0] - b[0]) };
   });
   return json({ date: q.get('date'), now, tables: out });
 });
@@ -272,23 +301,23 @@ route('POST', '/bookings', async ({ db, body }) => {
   const name = str(body.name, 80), phone = normPhone(body.phone);
   if (name.length < 2) fail('Nama wajib diisi');
   if (phone.length < 10 || phone.length > 15) fail('Nomor WhatsApp tidak valid');
-  const hours = int(body.hours);
-  if (hours < 1 || hours > int(s.max_booking_hours, 8)) fail('Durasi tidak valid');
-  const start = parseDate(body.date) + int(body.hour, -1) * 3600;
-  const h = int(body.hour, -1); if (h < 0 || h > 23) fail('Jam tidak valid');
+  const mins = parseDurMin(body, s, int(s.max_booking_hours, 8) * 60);
+  const sm = parseStartMin(body);
+  const start = parseDate(body.date) + sm * 60;
+  const hours = mins / 60;
   const now = nowWib();
   if (start <= now) fail('Jam mulai sudah lewat');
   if (start > now + int(s.max_days_ahead, 30) * 86400) fail('Terlalu jauh ke depan');
-  const end = start + hours * 3600;
+  const end = start + mins * 60;
   const tableId = int(body.table_id);
   await checkSlot(db, tableId, start, end);
-  const total = tablePrice(start, hours, s);
+  const total = tablePriceMin(start, mins, s);
   const code = 'ZM-' + randCode(6);
   const expires = now + int(s.hold_minutes, 60) * 60;
   await db.prepare(`INSERT INTO bookings(code,customer_name,phone,table_id,start_ts,end_ts,hours,total,status,source,expires_at,note,created_at)
      VALUES (?,?,?,?,?,?,?,?,'pending','online',?,?,?)`)
     .bind(code, name, phone, tableId, start, end, hours, total, expires, str(body.note, 300), now).run();
-  await audit(db, null, 'booking_create_online', 'booking', code, { name, tableId, start: dateStr(start), hour: h, hours, total });
+  await audit(db, null, 'booking_create_online', 'booking', code, { name, tableId, start: dateStr(start), time: `${Math.floor(sm / 60)}:${String(sm % 60).padStart(2, '0')}`, minutes: mins, total });
   return json({ code, total, start_ts: start, end_ts: end, expires_at: expires, payment_info: s.payment_info, whatsapp: s.whatsapp });
 });
 async function publicBooking(db, code, phone) {
@@ -315,14 +344,14 @@ route('POST', '/bookings/reschedule', async ({ db, body }) => {
   await expirePending(db);
   const b = await publicBooking(db, body.code, body.phone);
   if (!canReschedule(b)) fail('Reschedule hanya bisa paling lambat H-1 sebelum tanggal main');
-  const start = parseDate(body.date) + int(body.hour, -1) * 3600;
-  if (int(body.hour, -1) < 0 || int(body.hour) > 23) fail('Jam tidak valid');
+  const start = parseDate(body.date) + parseStartMin(body) * 60;
   if (start <= nowWib()) fail('Jam mulai sudah lewat');
   const tableId = int(body.table_id, b.table_id);
-  const end = start + b.hours * 3600;
+  const mins = bookingMins(b);
+  const end = start + mins * 60;
   await checkSlot(db, tableId, start, end, b.id);
   const s = await getSettings(db);
-  const newTotal = tablePrice(start, b.hours, s);
+  const newTotal = tablePriceMin(start, mins, s);
   const total = b.paid ? b.total : newTotal;
   await db.prepare('UPDATE bookings SET start_ts=?, end_ts=?, table_id=?, total=?, reschedule_count=reschedule_count+1 WHERE id=?')
     .bind(start, end, tableId, total, b.id).run();
@@ -344,19 +373,19 @@ route('POST', '/admin/bookings', async ({ db, user, body }) => {
   const s = await getSettings(db);
   const name = str(body.name, 80); if (name.length < 2) fail('Nama wajib diisi');
   const phone = normPhone(body.phone) || '-';
-  const hours = int(body.hours); if (hours < 1 || hours > 24) fail('Durasi tidak valid');
-  const h = int(body.hour, -1); if (h < 0 || h > 23) fail('Jam tidak valid');
-  const start = parseDate(body.date) + h * 3600, end = start + hours * 3600;
+  const mins = parseDurMin(body, { ...s, min_booking_minutes: 15 }, 24 * 60);
+  const hours = mins / 60;
+  const start = parseDate(body.date) + parseStartMin(body) * 60, end = start + mins * 60;
   const tableId = int(body.table_id);
   await checkSlot(db, tableId, start, end);
-  const total = tablePrice(start, hours, s);
+  const total = tablePriceMin(start, mins, s);
   const code = 'ZM-' + randCode(6);
   const r = await db.prepare(`INSERT INTO bookings(code,customer_name,phone,table_id,start_ts,end_ts,hours,total,status,source,note,created_at,created_by)
      VALUES (?,?,?,?,?,?,?,?,'confirmed','staff',?,?,?)`)
     .bind(code, name, phone, tableId, start, end, hours, total, str(body.note, 300), nowWib(), user.id).run();
   const id = r.meta.last_row_id;
   if (body.paid_method) await payBooking(db, user, id, payMethod(body.paid_method));
-  await audit(db, user, 'booking_create_staff', 'booking', code, { name, tableId, hours, total, paid: !!body.paid_method });
+  await audit(db, user, 'booking_create_staff', 'booking', code, { name, tableId, minutes: mins, total, paid: !!body.paid_method });
   return json({ ok: true, code });
 });
 async function payBooking(db, user, id, method) {
@@ -369,7 +398,7 @@ async function payBooking(db, user, id, method) {
      VALUES (?,?,?,?,?,?,'paid',?,?,?)`).bind(no, b.id, b.customer_name, b.total, b.total, method, user.id, now, now).run();
   const oid = o.meta.last_row_id;
   await db.prepare(`INSERT INTO order_items(order_id,item_type,ref_id,name,category,qty,price,total) VALUES (?,?,?,?,?,?,?,?)`)
-    .bind(oid, 'booking', b.id, `Booking ${b.table_name} ${b.code} (${b.hours} jam)`, 'Meja', b.hours, Math.round(b.total / b.hours), b.total).run();
+    .bind(oid, 'booking', b.id, `Booking ${b.table_name} ${b.code} (${durLabel(bookingMins(b))})`, 'Meja', 1, b.total, b.total).run();
   await db.prepare("UPDATE bookings SET paid=1, order_id=?, status='confirmed', expires_at=NULL WHERE id=?").bind(oid, b.id).run();
   return oid;
 }
@@ -397,12 +426,12 @@ route('POST', '/admin/bookings/:id/reschedule', async ({ db, user, params, body 
   need(user);
   const b = await db.prepare('SELECT * FROM bookings WHERE id=?').bind(int(params.id)).first();
   if (!b || !['pending', 'confirmed'].includes(b.status)) fail('Booking tidak aktif');
-  const h = int(body.hour, -1); if (h < 0 || h > 23) fail('Jam tidak valid');
-  const start = parseDate(body.date) + h * 3600, end = start + b.hours * 3600;
+  const mins = bookingMins(b);
+  const start = parseDate(body.date) + parseStartMin(body) * 60, end = start + mins * 60;
   const tableId = int(body.table_id, b.table_id);
   await checkSlot(db, tableId, start, end, b.id);
   const s = await getSettings(db);
-  const newTotal = tablePrice(start, b.hours, s);
+  const newTotal = tablePriceMin(start, mins, s);
   const total = b.paid ? b.total : newTotal;
   await db.prepare('UPDATE bookings SET start_ts=?, end_ts=?, table_id=?, total=?, reschedule_count=reschedule_count+1 WHERE id=?')
     .bind(start, end, tableId, total, b.id).run();
@@ -421,23 +450,27 @@ route('POST', '/admin/bookings/:id/noshow', async ({ db, user, params }) => {
 // ===== Admin: POS — meja & sesi =====
 async function sessionBill(db, sess, s, at = nowWib()) {
   const mins = Math.max(0, (at - sess.started_at) / 60);
-  let hours = Math.max(1, Math.ceil((mins - int(s.grace_minutes, 0)) / 60));
-  let amount = tablePrice(sess.started_at, hours, s), prepaidHours = 0, label = `Main meja (${hours} jam)`;
+  const grace = int(s.grace_minutes, 0);
+  // walk-in: per jam penuh (lewat dari toleransi dihitung jam berikutnya)
+  let billedMin = Math.max(1, Math.ceil((mins - grace) / 60)) * 60;
+  let amount = tablePriceMin(sess.started_at, billedMin, s), prepaidHours = 0, label = `Main meja (${durLabel(billedMin)})`;
   if (sess.booking_id) {
-    const b = await db.prepare('SELECT hours, paid, code, start_ts, total FROM bookings WHERE id=?').bind(sess.booking_id).first();
+    const b = await db.prepare('SELECT hours, paid, code, start_ts, end_ts, total FROM bookings WHERE id=?').bind(sess.booking_id).first();
     if (b) {
-      hours = Math.max(hours, b.hours);
+      // booking: sesuai durasi yang dipesan; lebih lama dari itu (lewat toleransi) ditambah per 30 menit
+      const booked = bookingMins(b), over = mins - grace - booked;
+      billedMin = booked + (over > 0 ? Math.ceil(over / 30) * 30 : 0);
       if (b.paid) {
-        prepaidHours = b.hours;
-        // booking sudah dibayar sebesar b.total. Yang ditagih: jam tambahan, plus selisih bila jadwal
+        prepaidHours = booked / 60;
+        // booking sudah dibayar sebesar b.total. Yang ditagih: waktu tambahan, plus selisih bila jadwal
         // dipindah ke jam yang lebih mahal (mis. dari happy hour ke jam normal).
-        amount = Math.max(0, tablePrice(b.start_ts, hours, s) - b.total);
-        label = hours > b.hours ? `Tambahan jam (${hours - b.hours} jam, booking ${b.code})`
+        amount = Math.max(0, tablePriceMin(b.start_ts, billedMin, s) - b.total);
+        label = billedMin > booked ? `Tambahan waktu (${durLabel(billedMin - booked)}, booking ${b.code})`
           : amount > 0 ? `Selisih harga jadwal baru (booking ${b.code})` : `Booking ${b.code} (lunas)`;
-      } else { amount = tablePrice(b.start_ts, hours, s); label = `Main meja (${hours} jam, booking ${b.code})`; }
+      } else { amount = tablePriceMin(b.start_ts, billedMin, s); label = `Main meja (${durLabel(billedMin)}, booking ${b.code})`; }
     }
   }
-  return { minutes: Math.floor(mins), hours, prepaidHours, amount, label };
+  return { minutes: Math.floor(mins), hours: Math.round(billedMin / 60 * 100) / 100, billed_label: durLabel(billedMin), prepaidHours, amount, label };
 }
 route('GET', '/admin/pos', async ({ db, user }) => {
   need(user);
@@ -737,7 +770,7 @@ route('GET', '/admin/settings', async ({ db, user }) => {
   return json({ settings: await getSettings(db), tables });
 });
 const EDITABLE = ['business_name', 'tagline', 'address', 'maps_url', 'whatsapp', 'instagram', 'price_per_hour', 'happy_price', 'happy_start', 'happy_end', 'package_hours',
-  'package_price', 'grace_minutes', 'hold_minutes', 'max_booking_hours', 'max_days_ahead', 'payment_info', 'receipt_footer'];
+  'package_price', 'grace_minutes', 'hold_minutes', 'min_booking_minutes', 'max_booking_hours', 'max_days_ahead', 'payment_info', 'receipt_footer'];
 route('PUT', '/admin/settings', async ({ db, user, body }) => {
   need(user, 'superadmin');
   const before = await getSettings(db);

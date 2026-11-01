@@ -61,6 +61,7 @@ export const SCHEMA = [
      ('happy_end','17'),
      ('grace_minutes','5'),
      ('hold_minutes','60'),
+     ('min_booking_minutes','60'),
      ('max_booking_hours','8'),
      ('max_days_ahead','30'),
      ('payment_info','Transfer BCA 1234567890 a.n. Zi Mo Mahjong\nAtau scan QRIS di kasir / minta via WhatsApp'),
