@@ -10,86 +10,131 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/base.css">
 <style>
-main { padding-top: 40px; }
+main { padding-top: 36px; }
+.intro { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; margin-bottom: 26px; }
+.intro h1 { margin: 0; }
+.rates { display: flex; gap: 18px; flex-wrap: wrap; font-size: .95rem; color: var(--muted); }
+.rates b { font-family: var(--mono); color: var(--ink); }
+.rates .hh b { color: #8a5d10; }
 .layout { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 36px; align-items: start; }
 .layout > * { min-width: 0; }
-.q { margin: 0 0 12px; font-size: 1.15rem; }
-.q + .hint { margin-top: -8px; }
+.q { margin: 0 0 12px; font-size: 1.1rem; display: flex; align-items: baseline; gap: 10px; }
+.q small { font: 600 .72rem/1 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+section.step { margin-bottom: 34px; }
+
 .days { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 14px; scroll-snap-type: x proximity; }
 .days .tile { flex: 0 0 64px; padding: 10px 4px 9px; scroll-snap-align: start; line-height: 1.15; font-family: var(--serif); }
 .days .tile b { display: block; font: 700 1.35rem/1.1 var(--mono); }
 .days .tile small { font-size: .74rem; }
-.tables { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-.tables .tile { padding: 12px 18px; font-family: var(--serif); font-weight: 700; }
-.hours { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px 8px; }
-.hours .tile { padding: 14px 0 12px; font-size: 1rem; }
-.hours .tile small { display: block; font-size: .65rem; opacity: .7; margin-top: 3px; }
-.hours .tile.hh:not(.back):not(.past) { box-shadow: 0 3px 0 var(--gold), 0 5px 0 #9a6a14, 0 8px 14px rgba(120, 80, 10, .22); }
-.hours .tile.hh:not(.back):not(.past) small { color: #9a6a14; opacity: 1; font-weight: 700; }
-.hours .tile.hh[aria-pressed='true'] { box-shadow: 0 3px 0 var(--red), 0 5px 0 var(--red-deep), 0 8px 14px rgba(120, 6, 3, .3); }
-.hh-note { display: inline-block; background: #fbecc8; color: #6b4a0c; padding: 6px 12px; border-radius: 999px; font-size: .9rem; margin: 6px 0 0; }
-.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: .85rem; color: var(--muted); margin: 18px 0 0; }
-.legend i { display: inline-block; width: 16px; height: 20px; border-radius: 3px; vertical-align: -5px; margin-right: 6px; }
-.durs { display: flex; gap: 10px; flex-wrap: wrap; }
-.durs .tile { width: 64px; font-size: 1.1rem; }
-.durs .tile small { display: block; font-size: .65rem; margin-top: 3px; }
-section.step { margin-bottom: 34px; }
+
+.times { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 460px; }
+.times label { display: block; }
+.times label span { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
+.times input { font: 600 1.35rem/1.2 var(--mono); padding: .45em .6em; background: var(--ivory); }
+.times .nextday { font: 600 .72rem/1 var(--mono); color: var(--red); margin-left: 6px; }
+.quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.quick button { appearance: none; border: 1.5px solid var(--line); background: transparent; border-radius: 999px; padding: 7px 13px;
+  font: 600 .85rem/1 var(--mono); color: var(--jade); cursor: pointer; }
+.quick button[aria-pressed='true'] { background: var(--jade); border-color: var(--jade); color: var(--ivory); }
+.dur-note { margin: 10px 0 0; font-size: .9rem; color: var(--muted); min-height: 1.4em; }
+.dur-note.err { color: var(--red); }
+
+/* Papan jadwal meja */
+.board { border: 1.5px solid var(--line); border-radius: 10px; background: var(--ivory); overflow: hidden; }
+.scale, .lane { display: grid; grid-template-columns: 82px minmax(0,1fr) 92px; align-items: center; }
+.scale { font: 500 .68rem/1 var(--mono); color: var(--muted); padding: 8px 0 6px; border-bottom: 1px solid var(--line); }
+.scale .ticks { position: relative; height: 12px; }
+.scale .ticks span { position: absolute; transform: translateX(-50%); }
+.scale .ticks span:first-child { transform: none; }
+.scale .ticks span:last-child { transform: translateX(-100%); }
+.lane { width: 100%; appearance: none; border: 0; background: transparent; padding: 0; cursor: pointer; text-align: left; font: inherit; color: inherit;
+  border-bottom: 1px solid #eee3c8; min-height: 46px; }
+.lane:last-child { border-bottom: 0; }
+.lane:hover { background: #fbf4e2; }
+.lane[aria-pressed='true'] { background: #f8e9e2; }
+.lane-name { padding: 0 10px 0 14px; font-weight: 700; font-size: .92rem; white-space: nowrap; }
+.lane[aria-pressed='true'] .lane-name { color: var(--red); }
+.track { position: relative; height: 22px; border-radius: 4px; background:
+  repeating-linear-gradient(90deg, transparent 0 calc(100% / 24 - 1px), rgba(1,86,64,.10) calc(100% / 24 - 1px) calc(100% / 24)), #fffdf7;
+  box-shadow: inset 0 0 0 1px #e6dbbd; }
+.track i { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.scale .ticks .hh { position: absolute; bottom: -7px; height: 3px; background: var(--gold); border-radius: 2px; }
+.track .past { background: repeating-linear-gradient(135deg, #e9e0cc 0 4px, #f4eddb 4px 8px); border-radius: 3px 0 0 3px; }
+.track .busy { background: var(--jade); }
+.track .pick { box-shadow: 0 0 0 2px var(--red); background: rgba(161, 8, 5, .14); z-index: 2; }
+.track .pick.clash { background: repeating-linear-gradient(135deg, rgba(161,8,5,.45) 0 4px, rgba(161,8,5,.15) 4px 8px); }
+.lane-state { font: 600 .74rem/1.2 var(--mono); padding: 0 12px 0 10px; text-align: right; }
+.lane-state.ok { color: var(--ok); }
+.lane-state.no { color: var(--red); }
+.board-note { font-size: .82rem; color: var(--muted); margin: 10px 2px 0; display: flex; gap: 16px; flex-wrap: wrap; }
+.board-note i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+
 aside { position: sticky; top: 16px; }
-.sum dt { font-size: .82rem; color: var(--muted); }
+.sum { margin: 0 0 14px; }
+.sum dt { font-size: .8rem; color: var(--muted); }
 .sum dd { margin: 0 0 10px; font-weight: 700; }
-.sum .total { font: 600 1.8rem/1 var(--mono); color: var(--red); }
+.sum .total { font: 600 1.8rem/1 var(--mono); color: var(--red); margin-bottom: 4px; }
+.breakdown { list-style: none; padding: 0; margin: 0 0 14px; font: 500 .78rem/1.5 var(--mono); color: var(--muted); }
+.breakdown li { display: flex; justify-content: space-between; gap: 10px; }
 .done { max-width: 620px; margin: 0 auto; text-align: center; }
 .code { font: 600 clamp(2rem, 7vw, 3rem)/1 var(--mono); letter-spacing: .06em; color: var(--red); margin: 8px 0 18px; }
 .payinfo { white-space: pre-line; text-align: left; background: var(--paper); padding: 16px 18px; border-radius: 8px; margin: 18px 0; }
-@media (max-width: 1100px) { .layout { grid-template-columns: minmax(0,1fr) 300px; gap: 24px; } .hours { grid-template-columns: repeat(6, 1fr); } }
-@media (max-width: 720px) { .layout { grid-template-columns: 1fr; } aside { position: static; } }
-@media (max-width: 520px) { .hours { grid-template-columns: repeat(6, 1fr); } }
+@media (max-width: 1100px) { .layout { grid-template-columns: minmax(0,1fr) 300px; gap: 24px; } }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } aside { position: static; } }
+@media (max-width: 520px) {
+  .scale, .lane { grid-template-columns: 64px minmax(0,1fr) 62px; }
+  .lane-name { padding-left: 10px; font-size: .84rem; }
+  .lane-state { padding-right: 8px; font-size: .68rem; }
+  .times input { font-size: 1.15rem; }
+}
 </style>
 </head>
 <body>
 <header class="site-head"><div class="wrap">
   <a href="/" aria-label="Beranda"><img src="/assets/logo-520.webp" alt="Zi Mo Mahjong" width="520" height="282"></a>
-  <nav><a href="/booking.html" aria-current="page">Booking</a><a href="/skor.html">Hitung poin</a><a href="/cek.html">Cek booking</a></nav>
+  <nav><a href="/skor.html">Hitung poin</a><a href="/cek.html">Cek booking</a><a href="/booking.html" class="btn small" aria-current="page">Booking</a></nav>
 </div></header>
 
 <main class="wrap">
   <div id="form-view">
-    <h1>Booking meja</h1>
-    <p class="muted" style="margin-bottom:4px">Rp<span class="num" id="rate">50.000</span> per jam per meja. Dibayar penuh, jadwal bisa diganti paling lambat H-1.</p>
-    <p class="hh-note hide" id="hh-note"></p>
-    <div class="layout" style="margin-top:28px">
+    <div class="intro">
+      <h1>Booking meja</h1>
+      <div class="rates"><span>Reguler <b id="rate">Rp50.000</b>/jam</span><span class="hh hide" id="hh-note"></span></div>
+    </div>
+    <div class="layout">
       <div>
         <section class="step">
-          <h2 class="q">Tanggal main</h2>
+          <h2 class="q"><small>01</small>Tanggal</h2>
           <div class="days" id="days" role="group" aria-label="Pilih tanggal"></div>
         </section>
         <section class="step">
-          <h2 class="q">Meja</h2>
-          <div class="tables" id="tables" role="group" aria-label="Pilih meja"></div>
-        </section>
-        <section class="step">
-          <h2 class="q">Jam mulai</h2>
-          <div class="hours" id="hours" role="group" aria-label="Pilih jam mulai"></div>
-          <div class="legend">
-            <span><i style="background:#fbf5e4;box-shadow:0 2px 0 var(--jade)"></i>Kosong</span>
-            <span><i style="background:var(--jade)"></i>Terisi</span>
-            <span><i style="background:#f8dcd2;box-shadow:0 2px 0 var(--red)"></i>Pilihanmu</span>
-            <span class="hide" id="lg-hh"><i style="background:#fbf5e4;box-shadow:0 2px 0 var(--gold)"></i>Happy hour</span>
+          <h2 class="q"><small>02</small>Jam main</h2>
+          <div class="times">
+            <label><span>Mulai</span><input type="time" id="t-start" step="60" required></label>
+            <label><span>Selesai <em class="nextday hide" id="nextday">+1 hari</em></span><input type="time" id="t-end" step="60" required></label>
           </div>
+          <div class="quick" id="quick" role="group" aria-label="Durasi cepat"></div>
+          <p class="dur-note" id="dur-note" aria-live="polite"></p>
         </section>
         <section class="step">
-          <h2 class="q">Berapa lama?</h2>
-          <p class="hint muted" id="dur-hint">Pilih jam mulai dulu.</p>
-          <div class="durs" id="durs" role="group" aria-label="Pilih durasi"></div>
+          <h2 class="q"><small>03</small>Meja</h2>
+          <div class="board" id="board" role="group" aria-label="Pilih meja"></div>
+          <div class="board-note">
+            <span><i style="background:var(--jade)"></i>Sudah dibooking</span>
+            <span><i style="box-shadow:0 0 0 2px var(--red);background:rgba(161,8,5,.14)"></i>Jam pilihanmu</span>
+            <span class="hide" id="lg-hh"><i style="background:var(--gold);height:3px"></i>Happy hour</span>
+          </div>
+          <p class="muted" style="font-size:.82rem;margin:6px 2px 0">Ketuk garis waktu meja untuk langsung pilih jam mulai di situ.</p>
         </section>
       </div>
       <aside>
         <form class="frame" id="f" novalidate><span class="c1"></span><span class="c2"></span>
-          <dl class="sum" style="margin:0 0 14px">
+          <dl class="sum">
             <dt>Meja</dt><dd id="s-table">–</dd>
             <dt>Waktu</dt><dd id="s-time">–</dd>
             <dt>Total</dt><dd class="total" id="s-total">Rp0</dd>
           </dl>
+          <ul class="breakdown" id="s-break"></ul>
           <label class="f"><span>Nama</span><input name="name" autocomplete="name" required maxlength="80"></label>
           <label class="f"><span>Nomor WhatsApp</span><input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx" required></label>
           <label class="f"><span>Catatan (opsional)</span><input name="note" maxlength="300"></label>
@@ -115,7 +160,8 @@ aside { position: sticky; top: 16px; }
   </div>
 </main>
 
-<footer class="site-foot"><div class="wrap row"><div class="grow">Zi Mo Mahjong</div><a href="/">Beranda</a></div></footer>
+<footer class="site-foot" id="foot"></footer>
 <script type="module" src="/js/booking.js"></script>
+<script type="module" src="/js/site.js"></script>
 </body>
 </html>

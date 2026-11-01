@@ -16,9 +16,9 @@
   background: radial-gradient(120% 90% at 50% 35%, #0e6a4f 0%, var(--jade-felt) 45%, var(--jade-deep) 100%); }
 .hero::before { content: ''; position: absolute; inset: 0; opacity: .18; pointer-events: none;
   background-image: radial-gradient(rgba(255,255,255,.25) 1px, transparent 1px); background-size: 4px 4px; }
-.hero .inner { position: relative; z-index: 2; text-align: center; padding: 56px 0 0; }
-.hero .logo { width: min(620px, 92%, 95vh); margin: 0 auto; filter: drop-shadow(0 0 1.5px #faf3dd) drop-shadow(0 0 1.5px #faf3dd) drop-shadow(0 0 1px #faf3dd) drop-shadow(0 14px 24px rgba(0,0,0,.35)); }
-.hero p.lead { font-size: clamp(1.05rem, 2.2vw, 1.3rem); max-width: 34ch; margin: 18px auto 26px; color: var(--cream); }
+.hero .inner { position: relative; z-index: 2; text-align: center; padding: 48px 0 0; }
+.hero .logo { width: min(560px, 90%, 85vh); margin: 0 auto; filter: drop-shadow(0 0 1.5px #faf3dd) drop-shadow(0 0 1.5px #faf3dd) drop-shadow(0 0 1px #faf3dd) drop-shadow(0 14px 24px rgba(0,0,0,.35)); }
+.hero p.lead { font-size: clamp(1.05rem, 2.2vw, 1.25rem); max-width: 34ch; margin: 14px auto 24px; color: var(--cream); }
 .hero .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 .hero .cta .btn.ghost { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 2px var(--gold-soft); }
 .cloud { position: absolute; z-index: 1; pointer-events: none; animation: drift 1.4s cubic-bezier(.2,.8,.2,1) both; }
@@ -27,52 +27,75 @@
 .cloud.r1 { width: 320px; right: -80px; top: 90px; --from: 120px; transform: scaleX(-1); }
 .cloud.r2 { width: 200px; right: -30px; top: 330px; --from: 160px; animation-delay: .15s; }
 @keyframes drift { from { opacity: 0; translate: var(--from) 0; } to { opacity: 1; translate: 0 0; } }
-.hh-pill { display: inline-block; margin: 22px auto 0; padding: 8px 16px; border-radius: 999px; color: var(--jade-deep);
-  background: linear-gradient(#f3d58f, var(--gold)); box-shadow: 0 3px 0 #8a5d10; font-size: .95rem; }
-.hh-pill b { font-family: var(--serif); }
-.hh-row { display: flex; align-items: center; gap: 14px; margin: 22px 0 0; padding-top: 18px; border-top: 1px dashed var(--line); line-height: 1.35; color: var(--ink); }
-.hh-row .sticker { font-size: 2.4rem; line-height: 1; }
-.hero .sign { position: relative; width: 300px; margin: 34px auto 0; }
-.hero .sign img { width: 100%; }
-.hero .sign .price { position: absolute; left: 6%; right: 6%; bottom: 13%; height: 38%; display: grid; place-items: center;
-  color: var(--red); font: 700 2.6rem/1 var(--serif); }
-.hero .sign .price small { display: block; font: 600 .78rem/1.2 var(--mono); color: var(--jade); margin-top: 4px; }
-@media (max-width: 700px) { .hero .inner { padding-top: 32px; } .hero .logo { width: min(88%, 420px); } .hero .cta .btn { flex: 1 1 140px; max-width: 220px; } .cloud.l2, .cloud.r2 { display: none; } .cloud.l1 { width: 180px; top: 10px; } .cloud.r1 { width: 190px; top: 30px; } .hero .sign { width: 240px; } .hero .sign .price { font-size: 2rem; } }
+/* status langsung di bawah hero */
+.live { position: relative; z-index: 2; margin-top: 40px; background: rgba(0, 30, 22, .55); border-top: 1px solid rgba(228,194,122,.25); }
+.live .wrap { display: flex; flex-wrap: wrap; gap: 10px 34px; justify-content: center; padding: 14px 0; font-size: .95rem; color: var(--cream); }
+.live b { color: var(--ivory); font-family: var(--mono); font-weight: 600; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #3ddc84; margin-right: 8px; box-shadow: 0 0 0 4px rgba(61,220,132,.18); vertical-align: 1px; }
+.dot.gold { background: var(--gold-soft); box-shadow: 0 0 0 4px rgba(228,194,122,.2); }
+@media (max-width: 700px) { .hero .inner { padding-top: 28px; } .hero .logo { width: min(88%, 420px); } .hero .cta .btn { flex: 1 1 140px; max-width: 220px; }
+  .cloud.l2, .cloud.r2 { display: none; } .cloud.l1 { width: 170px; top: 6px; } .cloud.r1 { width: 180px; top: 26px; } .live .wrap { justify-content: flex-start; } }
 
-section.block { padding: 72px 0 0; }
-.price-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
-.big-price { font-size: clamp(3.4rem, 9vw, 5.6rem); line-height: .95; margin: 0; }
-.big-price .per { display: block; font: 700 1.1rem/1 var(--serif); color: var(--jade); text-shadow: none; margin-top: 12px; }
-.rules { list-style: none; padding: 0; margin: 0; }
-.rules li { padding: 12px 0 12px 34px; border-bottom: 1px dashed var(--line); position: relative; }
-.rules li::before { content: '發'; position: absolute; left: 0; top: 11px; width: 24px; height: 28px; border-radius: 4px; display: grid; place-items: center;
-  font: 700 .85rem/1 serif; color: var(--jade); background: var(--ivory); box-shadow: 0 2px 0 var(--jade); }
-.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 28px; counter-reset: s; }
-.step { position: relative; padding-top: 70px; }
-.step::before { counter-increment: s; content: counter(s); position: absolute; top: 0; left: 0; width: 46px; height: 58px; border-radius: 8px;
-  display: grid; place-items: center; font: 700 1.5rem/1 var(--serif); color: var(--red);
-  background: linear-gradient(#fffdf6, #f3ead2); box-shadow: var(--shadow-tile); }
+section.block { padding: 64px 0 0; }
+.head-row { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.head-row h2 { margin: 0; }
+.head-row p { margin: 4px 0 0; color: var(--muted); }
+
+/* jadwal hari ini */
+.today { border: 1.5px solid var(--line); border-radius: 10px; background: var(--ivory); overflow: hidden; }
+.today .r { display: grid; grid-template-columns: 90px minmax(0,1fr); align-items: center; border-bottom: 1px solid #eee3c8; min-height: 38px; }
+.today .r:last-child { border-bottom: 0; }
+.today .n { padding: 0 12px 0 16px; font-weight: 700; font-size: .9rem; white-space: nowrap; }
+.today .tr { position: relative; height: 18px; margin-right: 16px; border-radius: 3px; background:
+  repeating-linear-gradient(90deg, transparent 0 calc(100% / 24 - 1px), rgba(1,86,64,.10) calc(100% / 24 - 1px) calc(100% / 24)), #fffdf7;
+  box-shadow: inset 0 0 0 1px #e6dbbd; }
+.today .tr i { position: absolute; top: 0; bottom: 0; background: var(--jade); border-radius: 2px; }
+.today .tr .past { background: repeating-linear-gradient(135deg, #e9e0cc 0 4px, #f4eddb 4px 8px); }
+.today .tr .now { width: 2px; background: var(--red); top: -4px; bottom: -4px; z-index: 2; }
+.today .scale { font: 500 .68rem/1 var(--mono); color: var(--muted); padding: 9px 0 6px; }
+.today .scale .tr { background: none; box-shadow: none; height: 10px; }
+.today .scale .tr span { position: absolute; transform: translateX(-50%); }
+.today .scale .tr span:first-child { transform: none; } .today .scale .tr span:last-child { transform: translateX(-100%); }
+@media (max-width: 520px) { .today .r { grid-template-columns: 66px minmax(0,1fr); } .today .n { padding-left: 10px; font-size: .82rem; } .today .tr { margin-right: 10px; } }
+
+/* harga */
+.price-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 48px; align-items: start; }
+.pricelist { list-style: none; padding: 0; margin: 0; }
+.pricelist li { display: flex; align-items: baseline; gap: 10px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+.pricelist li .what { font-weight: 700; }
+.pricelist li .what small { display: block; font-weight: 400; color: var(--muted); font-size: .86rem; }
+.pricelist li .fill { flex: 1; }
+.pricelist li .amt { font: 600 1.35rem/1 var(--mono); color: var(--red); white-space: nowrap; }
+.pricelist li .amt small { font-size: .75rem; color: var(--muted); }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary { cursor: pointer; list-style: none; padding: 14px 28px 14px 0; font-weight: 700; position: relative; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; position: absolute; right: 4px; top: 12px; font: 600 1.2rem/1 var(--mono); color: var(--jade); }
+.faq details[open] summary::after { content: '−'; }
+.faq details p { margin: 0 0 16px; color: #3c4a42; }
+
 .score-band { margin-top: 72px; background: var(--jade); color: var(--cream); overflow: hidden; }
-.score-band .wrap { display: grid; grid-template-columns: 1fr 260px; gap: 32px; align-items: center; padding: 48px 0; }
+.score-band .wrap { display: grid; grid-template-columns: 1fr 240px; gap: 32px; align-items: center; padding: 44px 0; }
 .score-band h2 { color: var(--ivory); }
-.score-band img { width: 260px; }
-.place { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-.place dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 10px 18px; }
+.score-band img { width: 240px; }
+.place { display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: stretch; }
+.place dl { margin: 0 0 18px; display: grid; grid-template-columns: auto 1fr; gap: 10px 18px; }
 .place dt { font-weight: 700; color: var(--jade); }
 .place dd { margin: 0; }
-.pandas { display: flex; justify-content: center; gap: 10px; align-items: flex-end; }
-.pandas img { width: 30%; max-width: 150px; }
+.map { border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; min-height: 300px; background: var(--paper); }
+.map iframe { width: 100%; height: 100%; min-height: 300px; border: 0; display: block; }
+.pandas { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; }
+.pandas img { width: 96px; }
 @media (max-width: 760px) {
-  .price-grid, .place, .score-band .wrap { grid-template-columns: 1fr; }
-  .steps { grid-template-columns: 1fr; gap: 20px; }
-  .score-band img { width: 180px; margin: 0 auto; }
+  .price-grid, .place, .score-band .wrap { grid-template-columns: 1fr; gap: 28px; }
+  .score-band img { width: 170px; margin: 0 auto; }
 }
 </style>
 </head>
 <body>
 <header class="site-head"><div class="wrap">
   <a href="/" aria-label="Beranda Zi Mo Mahjong"><img src="/assets/logo-520.webp" alt="Zi Mo Mahjong" width="520" height="282"></a>
-  <nav><a href="/booking.html">Booking</a><a href="/skor.html">Hitung poin</a><a href="/cek.html">Cek booking</a></nav>
+  <nav><a href="/skor.html">Hitung poin</a><a href="/cek.html">Cek booking</a><a href="/booking.html" class="btn small">Booking</a></nav>
 </div></header>
 
 <main>
@@ -84,53 +107,54 @@ section.block { padding: 72px 0 0; }
   <div class="inner wrap">
     <h1 class="hide">Zi Mo Mahjong</h1>
     <img class="logo" src="/assets/logo-1200.webp" alt="Zi Mo Mahjong" width="1200" height="651">
-    <p class="lead" data-k="tagline">Meja mahjong otomatis, buka 24 jam.</p>
+    <p class="lead" data-k="tagline">Mahjong lounge · buka 24 jam</p>
     <div class="cta">
       <a class="btn" href="/booking.html">Booking meja</a>
-      <a class="btn ghost" href="/skor.html">Hitung poin</a>
-    </div>
-    <p class="hh-pill hide" data-hh>Happy hour <b class="hhp">30K</b>/jam · setiap hari <span class="hht">10.00–17.00</span></p>
-    <div class="sign">
-      <img src="/assets/panda/13.webp" alt="Panda Zi Mo memegang papan harga" width="344" height="267">
-      <div class="price"><div><span class="hp">50K</span><small>per jam</small></div></div>
+      <a class="btn ghost" href="#jadwal">Lihat meja kosong</a>
     </div>
   </div>
+  <div class="live" aria-live="polite"><div class="wrap">
+    <span id="live-free"><span class="dot"></span>Buka sekarang</span>
+    <span id="live-rate"></span>
+  </div></div>
+</section>
+
+<section class="block wrap" id="jadwal">
+  <div class="head-row">
+    <div><h2>Jadwal meja hari ini</h2><p id="today-date">Hijau = sudah dibooking. Garis merah = sekarang.</p></div>
+    <a class="btn jade small" href="/booking.html">Pilih jam & meja</a>
+  </div>
+  <div class="today" id="today"><p class="muted" style="padding:16px">Memuat jadwal…</p></div>
 </section>
 
 <section class="block wrap" id="harga">
   <div class="price-grid">
-    <div class="frame"><span class="c1"></span><span class="c2"></span>
-      <p class="big-price sticker"><span class="hp">50K</span><span class="per">per jam, per meja</span></p>
-      <p class="hh-row hide" data-hh><span class="sticker hhp">30K</span><span>happy hour<br><b class="hht">10.00–17.00</b> setiap hari</span></p>
-      <p class="muted pkg hide" style="margin-top:18px"></p>
-    </div>
     <div>
-      <h2>Sebelum datang</h2>
-      <ul class="rules">
-        <li><span data-tables>10</span> meja dengan mesin mahjong otomatis, masing-masing untuk 4 pemain.</li>
-        <li>Dihitung per jam penuh. Lewat sedikit dari satu jam dihitung jam berikutnya.</li>
-        <li>Booking online dibayar penuh di depan supaya meja tertahan untukmu.</li>
-        <li>Tidak ada refund, tapi jadwal bisa diganti paling lambat H-1.</li>
+      <h2>Harga</h2>
+      <ul class="pricelist">
+        <li><span class="what">Reguler<small>per meja, maksimal 4 pemain</small></span><span class="fill"></span><span class="amt"><span class="pr">Rp50.000</span><small>/jam</small></span></li>
+        <li class="hide" data-hh><span class="what">Happy hour<small>setiap hari, <span class="hht">10.00–17.00</span></small></span><span class="fill"></span><span class="amt"><span class="hhp">Rp30.000</span><small>/jam</small></span></li>
+        <li class="hide" id="pkg"><span class="what">Paket<small id="pkg-d"></small></span><span class="fill"></span><span class="amt" id="pkg-p"></span></li>
       </ul>
+      <p class="muted" style="margin-top:14px;font-size:.92rem">Jam mulai dan selesai bebas, dihitung per menit. Kalau main melewati jam happy hour, sisa waktunya kena harga reguler.</p>
+      <div class="pandas" aria-hidden="true"><img src="/assets/panda/6.webp" alt=""><img src="/assets/panda/0.webp" alt=""><img src="/assets/panda/9.webp" alt=""></div>
+    </div>
+    <div class="faq">
+      <h2>Sering ditanya</h2>
+      <details><summary>Harus booking dulu?</summary><p>Tidak wajib. Kalau ada meja kosong, langsung datang saja. Untuk walk-in, waktu main dihitung per jam di kasir.</p></details>
+      <details><summary>Bayarnya bagaimana?</summary><p>Booking online dibayar penuh lewat transfer atau QRIS, lalu bukti dikirim via WhatsApp. Meja ditahan <span class="hold">60</span> menit sambil menunggu pembayaran.</p></details>
+      <details><summary>Bisa ganti jadwal atau batal?</summary><p>Jadwal bisa diganti sendiri lewat halaman Cek booking, paling lambat H-1. Booking yang sudah dibayar tidak bisa di-refund.</p></details>
+      <details><summary>Kalau main lebih lama dari booking?</summary><p>Boleh, selama mejanya tidak dipakai booking berikutnya. Tambahan waktu dibayar di kasir, dihitung per 30 menit.</p></details>
+      <details><summary>Minimal main berapa lama?</summary><p>Minimal <span class="minb">1 jam</span>. Jam mulai bebas, misalnya 14.20 sampai 16.50.</p></details>
     </div>
   </div>
-</section>
-
-<section class="block wrap">
-  <h2>Cara booking</h2>
-  <div class="steps">
-    <div class="step"><h3>Pilih meja & jam</h3><p>Ubin putih masih kosong, ubin hijau sudah terisi. Pilih jam mulai dan berapa lama main.</p></div>
-    <div class="step"><h3>Bayar penuh</h3><p>Transfer atau QRIS, lalu kirim bukti lewat WhatsApp. Slot ditahan sementara selama kamu membayar.</p></div>
-    <div class="step"><h3>Datang & main</h3><p>Sebutkan kode booking ke kasir. Mau tambah jam? Bayar sisanya di kasir.</p></div>
-  </div>
-  <p style="margin-top:28px"><a class="btn jade" href="/booking.html">Lihat jadwal kosong</a></p>
 </section>
 
 <section class="score-band">
   <div class="wrap">
     <div>
-      <h2>Tidak perlu kertas & pulpen</h2>
-      <p>Buat room di HP, bagikan kodenya ke teman satu meja, lalu catat setiap ronde: zimo, tembak, atau seri. Skor semua pemain langsung terhitung dan muncul di semua HP.</p>
+      <h2>Catat skor di HP</h2>
+      <p>Satu orang buat room, yang lain masuk pakai kodenya. Setiap ronde tinggal pilih zimo, tembak, atau seri, poin semua pemain langsung terhitung.</p>
       <a class="btn" href="/skor.html">Buka penghitung poin</a>
     </div>
     <img src="/assets/panda/10.webp" alt="Panda melempar ubin mahjong" width="300" height="315">
@@ -140,48 +164,71 @@ section.block { padding: 72px 0 0; }
 <section class="block wrap" id="lokasi">
   <div class="place">
     <div>
-      <h2>Datang ke Zi Mo</h2>
+      <h2>Lokasi</h2>
       <dl>
         <dt>Alamat</dt><dd data-k="address">Apartemen B Residence, Ground Floor, BSD</dd>
-        <dt>Jam buka</dt><dd>24 jam, setiap hari</dd>
-        <dt>WhatsApp</dt><dd><a data-wa href="#">Chat kami</a></dd>
-        <dt>Instagram</dt><dd><a data-ig href="https://instagram.com/zimo_mahjong" rel="noopener">@zimo_mahjong</a></dd>
+        <dt>Jam buka</dt><dd>Setiap hari, 24 jam</dd>
+        <dt>WhatsApp</dt><dd><a data-wa href="#" target="_blank" rel="noopener">Chat kami</a></dd>
+        <dt>Instagram</dt><dd><a data-ig href="https://instagram.com/zimo_mahjong" target="_blank" rel="noopener">@zimo_mahjong</a></dd>
       </dl>
-      <p style="margin-top:20px"><a class="btn ghost small hide" data-maps href="#" rel="noopener">Buka di Google Maps</a></p>
+      <a class="btn ghost small" data-maps href="#" target="_blank" rel="noopener">Buka di Google Maps</a>
     </div>
-    <div class="pandas" aria-hidden="true">
-      <img src="/assets/panda/6.webp" alt=""><img src="/assets/panda/0.webp" alt=""><img src="/assets/panda/9.webp" alt="">
-    </div>
+    <div class="map"><iframe id="map" title="Peta lokasi Zi Mo Mahjong" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
   </div>
 </section>
 </main>
 
-<footer class="site-foot"><div class="wrap row">
-  <div class="grow">© <span id="yr"></span> <span data-k="business_name">Zi Mo Mahjong</span></div>
-  <a href="/admin/">Masuk staf</a>
-</div></footer>
+<footer class="site-foot" id="foot"></footer>
 
 <script type="module">
-import { api, rp } from '/js/common.js';
-document.getElementById('yr').textContent = new Date().getFullYear();
+import { api, rp, pad, todayIso, fmtDate, wibNow, esc } from '/js/common.js';
+const $$ = (s) => document.querySelectorAll(s);
+const dur = (m) => { const h = Math.floor(m / 60), r = m % 60; return [h ? h + ' jam' : '', r ? r + ' menit' : ''].filter(Boolean).join(' '); };
 try {
   const { settings: s, tables } = await api('/public/info');
-  document.querySelectorAll('[data-tables]').forEach((el) => (el.textContent = tables.length));
-  document.querySelectorAll('[data-k]').forEach((el) => { if (s[el.dataset.k]) el.textContent = s[el.dataset.k]; });
-  const k = Math.round(+s.price_per_hour / 1000);
-  document.querySelectorAll('.hp').forEach((el) => (el.textContent = k + 'K'));
-  if (+s.happy_price > 0) {
-    const p2 = (n) => String(n).padStart(2, '0');
-    document.querySelectorAll('.hhp').forEach((el) => (el.textContent = Math.round(+s.happy_price / 1000) + 'K'));
-    document.querySelectorAll('.hht').forEach((el) => (el.textContent = `${p2(s.happy_start)}.00–${p2(s.happy_end)}.00`));
-    document.querySelectorAll('[data-hh]').forEach((el) => el.classList.remove('hide'));
+  $$('[data-k]').forEach((el) => { if (s[el.dataset.k]) el.textContent = s[el.dataset.k]; });
+  $$('.pr').forEach((el) => (el.textContent = rp(s.price_per_hour)));
+  $$('.hold').forEach((el) => (el.textContent = s.hold_minutes));
+  $$('.minb').forEach((el) => (el.textContent = dur(+s.min_booking_minutes || 60)));
+  const hhOn = +s.happy_price > 0, hs = +s.happy_start, he = +s.happy_end;
+  if (hhOn) {
+    $$('.hhp').forEach((el) => (el.textContent = rp(s.happy_price)));
+    $$('.hht').forEach((el) => (el.textContent = `${pad(hs)}.00–${pad(he)}.00`));
+    $$('[data-hh]').forEach((el) => el.classList.remove('hide'));
   }
-  if (+s.package_price > 0) { const p = document.querySelector('.pkg'); p.textContent = `Paket ${s.package_hours} jam: ${rp(s.package_price)}`; p.classList.remove('hide'); }
-  document.querySelector('[data-wa]').href = 'https://wa.me/' + s.whatsapp;
-  document.querySelector('[data-wa]').textContent = '+' + s.whatsapp;
+  if (+s.package_price > 0) {
+    document.getElementById('pkg-d').textContent = `${s.package_hours} jam main`;
+    document.getElementById('pkg-p').textContent = rp(s.package_price);
+    document.getElementById('pkg').classList.remove('hide');
+  }
+  const wa = document.querySelector('[data-wa]');
+  wa.href = 'https://wa.me/' + s.whatsapp; wa.textContent = '+' + s.whatsapp.replace(/^62(\d{3})(\d{4})(\d+)$/, '62 $1-$2-$3');
   if (s.instagram) { const ig = document.querySelector('[data-ig]'); ig.href = 'https://instagram.com/' + s.instagram; ig.textContent = '@' + s.instagram; }
-  if (s.maps_url) { const m = document.querySelector('[data-maps]'); m.href = s.maps_url; m.classList.remove('hide'); }
+  const q = s.maps_url || 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(s.address);
+  document.querySelector('[data-maps]').href = q;
+  document.getElementById('map').src = 'https://maps.google.com/maps?q=' + encodeURIComponent(s.address) + '&z=16&output=embed';
+
+  // tarif yang berlaku sekarang
+  const nowH = Math.floor((wibNow() % 86400) / 3600);
+  const inHH = hhOn && nowH >= hs && nowH < he;
+  document.getElementById('live-rate').innerHTML = inHH
+    ? `<span class="dot gold"></span>Happy hour sampai ${pad(he)}.00 · <b>${rp(s.happy_price)}</b>/jam`
+    : hhOn ? `Tarif sekarang <b>${rp(s.price_per_hour)}</b>/jam · happy hour mulai ${pad(hs)}.00` : `<b>${rp(s.price_per_hour)}</b>/jam`;
+
+  // jadwal hari ini + jumlah meja kosong sekarang
+  const date = todayIso(), a = await api('/availability?date=' + date);
+  const d0 = Date.UTC(+date.slice(0, 4), +date.slice(5, 7) - 1, +date.slice(8, 10)) / 1000, now = wibNow();
+  const pct = (ts) => Math.max(0, Math.min(100, ((ts - d0) / 86400) * 100));
+  const free = a.tables.filter((t) => !t.busy.some(([b0, b1]) => b0 <= now && b1 > now)).length;
+  document.getElementById('live-free').innerHTML = `<span class="dot"></span>Sekarang <b>${free}</b> dari <b>${a.tables.length}</b> meja kosong`;
+  document.getElementById('today-date').textContent = `${fmtDate(now)}. Hijau = sudah dibooking, garis merah = sekarang.`;
+  const ticks = [0, 6, 12, 18, 24].map((h) => `<span style="left:${(h / 24) * 100}%">${pad(h)}</span>`).join('');
+  document.getElementById('today').innerHTML = `<div class="r scale"><span></span><span class="tr">${ticks}</span></div>` +
+    a.tables.map((t) => `<div class="r"><span class="n">${esc(t.name)}</span><span class="tr"><i class="past" style="left:0;width:${pct(now)}%"></i>${
+      t.busy.filter(([b0, b1]) => b1 > d0 && b0 < d0 + 86400).map(([b0, b1]) => `<i style="left:${pct(b0)}%;width:${pct(b1) - pct(b0)}%"></i>`).join('')
+    }<i class="now" style="left:${pct(now)}%"></i></span></div>`).join('');
 } catch (e) { /* tetap tampil dengan teks bawaan */ }
 </script>
+<script type="module" src="/js/site.js"></script>
 </body>
 </html>
