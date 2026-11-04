@@ -10,10 +10,10 @@ const main = () => $('#main');
 const dur = (sec) => { sec = Math.max(0, Math.floor(sec)); return `${Math.floor(sec / 3600)}:${pad(Math.floor(sec / 60) % 60)}:${pad(sec % 60)}`; };
 
 const VIEWS = [
-  { id: 'pos', label: 'Kasir & meja', show: () => true, render: viewPos },
+  { id: 'pos', label: 'Kasir & meja', show: isAdmin, render: viewPos },
   { id: 'booking', label: 'Booking', show: () => true, render: viewBooking },
   { id: 'transaksi', label: 'Transaksi', show: () => true, render: viewOrders },
-  { id: 'laporan', label: 'Laporan', show: () => true, render: viewReport },
+  { id: 'laporan', label: 'Laporan', show: isAdmin, render: viewReport },
   { id: 'menu', label: 'Menu F&B', show: isAdmin, render: viewMenu },
   { id: 'pengguna', label: 'Pengguna', show: isSuper, render: viewUsers },
   { id: 'pengaturan', label: 'Pengaturan', show: isSuper, render: viewSettings },
@@ -23,7 +23,7 @@ const VIEWS = [
 // ---------- dialog ----------
 function openDlg(html) { $('#dlg-body').innerHTML = html; const d = $('#dlg'); if (!d.open) d.showModal(); return $('#dlg-body'); }
 function closeDlg() { $('#dlg').close(); }
-$('#dlg').addEventListener('close', () => { const v = (location.hash.slice(1) || 'pos').split('?')[0]; if (v === 'pos') route(); });
+$('#dlg').addEventListener('close', () => { const v = location.hash.slice(1).split('?')[0] || (isAdmin() ? 'pos' : ''); if (v === 'pos') route(); });
 
 // ---------- auth ----------
 async function boot() {
@@ -81,8 +81,8 @@ document.addEventListener('click', (e) => { if (!e.target.closest('#me')) $('#me
 async function route() {
   if (!me) return;
   clearInterval(timer);
-  const id = (location.hash.slice(1) || 'pos').split('?')[0];
-  const v = VIEWS.find((x) => x.id === id && x.show()) || VIEWS[0];
+  const id = location.hash.slice(1).split('?')[0];
+  const v = VIEWS.find((x) => x.id === id && x.show()) || VIEWS.find((x) => x.show());
   $$('#nav a').forEach((a) => a.toggleAttribute('aria-current', a.dataset.v === v.id));
   $('#me').open = false;
   try { await v.render(); stackTables(); $('#nav a[aria-current]')?.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {
@@ -274,9 +274,10 @@ function voidDialog(o) {
 async function viewBooking() {
   const q = new URLSearchParams(location.hash.split('?')[1] || '');
   const date = q.get('d') || todayIso();
+  if (q.get('v') !== 'list') return viewGrid(date);
   const [{ bookings }, info] = await Promise.all([api('/admin/bookings?from=' + date), api('/public/info')]);
   main().innerHTML = `
-    <div class="row"><h1 class="grow">Booking</h1><button class="btn" id="b-new">Tambah booking</button></div>
+    <div class="row"><h1 class="grow">Booking</h1>${modeTabs(date, 'list')}<button class="btn" id="b-new">Tambah booking</button></div>
     <div class="bar">
       <button class="btn ghost small" data-nav="-1" aria-label="Hari sebelumnya">‹</button>
       <label class="f"><span>Tanggal</span><input type="date" id="bd" value="${date}"></label>
@@ -293,11 +294,102 @@ async function viewBooking() {
       <td><span class="pill ${b.status}">${STATUS[b.status]}</span> ${b.paid ? '<span class="pill paid">Lunas</span>' : ''}
         ${b.status === 'pending' && b.expires_at ? `<div class="muted" style="font-size:.78rem">batas bayar ${fmtTime(b.expires_at)}</div>` : ''}</td>
       <td style="white-space:nowrap">${bookingActions(b)}</td></tr>`).join('') : '<tr><td colspan="7" class="muted">Belum ada booking di tanggal ini.</td></tr>'}</tbody></table></div>`;
-  const go = (d) => { location.hash = '#booking?d=' + d; };
+  const go = (d) => { location.hash = '#booking?v=list&d=' + d; };
   $('#bd').addEventListener('change', (e) => go(e.target.value));
   $$('[data-nav]').forEach((x) => x.addEventListener('click', () => go(x.dataset.nav === '0' ? todayIso() : addDays(date, +x.dataset.nav))));
   $('#b-new').addEventListener('click', () => newBookingDialog(info, date));
   $$('[data-act]').forEach((x) => x.addEventListener('click', () => bookingAction(x.dataset.act, bookings.find((b) => b.id === +x.dataset.id), info)));
+}
+// ---------- Jadwal: grid jam × meja (seperti sheet booking) ----------
+const modeTabs = (date, cur) => `<div class="seg" role="tablist">
+  <a href="#booking?d=${date}" role="tab" aria-selected="${cur === 'grid'}">Jadwal</a>
+  <a href="#booking?v=list&d=${date}" role="tab" aria-selected="${cur === 'list'}">Daftar</a></div>`;
+const DAY_START = 10; // hari operasional mulai 10.00 sampai 10.00 besoknya, seperti sheet
+const BK_STATE = (b) => b.status === 'completed' ? 'done' : b.status === 'no_show' ? 'noshow' : b.paid ? 'paid' : 'unpaid';
+const BK_LABEL = { unpaid: 'Belum bayar', paid: 'Lunas', done: 'Sudah datang', noshow: 'Tidak datang' };
+async function viewGrid(date) {
+  const d0 = Date.parse(date + 'T00:00:00Z') / 1000, from = d0 + DAY_START * 3600, to = from + 86400;
+  const now = wibNow();
+  const live = now >= from && now < to;
+  const [{ bookings }, info, pos] = await Promise.all([
+    api(`/admin/bookings?from=${date}&to=${addDays(date, 1)}`), api('/public/info'), live ? api('/admin/pos') : Promise.resolve(null)]);
+  const items = bookings.filter((b) => ['pending', 'confirmed', 'completed', 'no_show'].includes(b.status) && b.start_ts < to && b.end_ts > from)
+    .map((b) => ({ kind: 'bk', b, s: b.start_ts, e: b.end_ts, table: b.table_id, state: BK_STATE(b) }));
+  // meja yang sedang dipakai tanpa booking (walk-in)
+  if (pos) for (const t of pos.tables) {
+    const ss = t.session; if (!ss || ss.booking_id) continue;
+    items.push({ kind: 'walk', s: ss.started_at, e: Math.max(now, ss.started_at + 3600), table: t.id, name: ss.customer_name || 'Walk-in', state: 'walk' });
+  }
+  const tables = info.tables;
+  const active = items.filter((i) => i.kind === 'walk' || ['unpaid', 'paid'].includes(i.state)).length;
+  const rows = Array.from({ length: 24 }, (_, i) => {
+    const s = from + i * 3600, e = s + 3600, h = (DAY_START + i) % 24;
+    const isNow = now >= s && now < e;
+    const cells = tables.map((t) => {
+      const here = items.filter((x) => x.table === t.id && x.s < e && x.e > s);
+      if (!here.length) {
+        const past = e <= now;
+        return `<td class="cell empty${past ? ' past' : ''}"><select class="st" data-empty data-t="${t.id}" data-ts="${s}" aria-label="${esc(t.name)} ${pad(h)}.00"${past ? ' disabled' : ''}>
+          <option value="">Kosong</option><option value="new">+ Booking</option></select></td>`;
+      }
+      return `<td class="cell">${here.map((x) => cellItem(x)).join('')}</td>`;
+    }).join('');
+    return `<tr${isNow ? ' class="now"' : ''}><th class="hr" scope="row">${pad(h)}.00–${pad((h + 1) % 24)}.00</th>${cells}</tr>`;
+  }).join('');
+  main().innerHTML = `
+    <div class="row"><h1 class="grow">Booking</h1>${modeTabs(date, 'grid')}<button class="btn" id="b-new">Tambah booking</button></div>
+    <div class="bar">
+      <button class="btn ghost small" data-nav="-1" aria-label="Hari sebelumnya">‹</button>
+      <label class="f"><span>Tanggal</span><input type="date" id="bd" value="${date}"></label>
+      <button class="btn ghost small" data-nav="1" aria-label="Hari berikutnya">›</button>
+      <button class="btn ghost small" data-nav="0">Hari ini</button>
+      <span class="muted">${active} aktif · jam ${pad(DAY_START)}.00 sampai ${pad(DAY_START)}.00 besoknya</span>
+    </div>
+    <div class="sheet-wrap"><table class="sheet">
+      <thead><tr class="day"><th class="hr"></th><th colspan="${tables.length}"><span class="day-t">${fmtDate(d0)}</span></th></tr>
+      <tr><th class="hr"></th>${tables.map((t) => `<th>${esc(t.name)}</th>`).join('')}</tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="sheet-legend"><span class="lg unpaid">Belum bayar</span><span class="lg paid">Lunas</span><span class="lg done">Sudah datang</span><span class="lg walk">Walk-in</span><span class="lg noshow">Tidak datang</span></div>`;
+  const go = (d) => { location.hash = '#booking?d=' + d; };
+  $('#bd').addEventListener('change', (e) => go(e.target.value));
+  $$('[data-nav]').forEach((x) => x.addEventListener('click', () => go(x.dataset.nav === '0' ? todayIso() : addDays(date, +x.dataset.nav))));
+  $('#b-new').addEventListener('click', () => newBookingDialog(info, date));
+  $$('select[data-empty]').forEach((sel) => sel.addEventListener('change', () => {
+    if (sel.value !== 'new') return;
+    const ts = +sel.dataset.ts; sel.value = '';
+    const t = ts % 86400;
+    newBookingDialog(info, new Date(ts * 1000).toISOString().slice(0, 10),
+      { back: location.hash, table_id: +sel.dataset.t, time: `${pad(Math.floor(t / 3600))}:00`, end: `${pad((Math.floor(t / 3600) + 1) % 24)}:00` });
+  }));
+  $$('select[data-bk]').forEach((sel) => sel.addEventListener('change', async () => {
+    const b = bookings.find((x) => x.id === +sel.dataset.bk), v = sel.value;
+    sel.value = sel.dataset.cur;
+    if (v === 'pay') return bookingAction('pay', b, info);
+    if (v === 'resch' || v === 'noshow' || v === 'cancel') return bookingAction(v, b, info);
+    if (v === 'start') {
+      if (!b.paid && !confirm(`${b.customer_name} belum bayar. Tetap mulai main? Tagihan dibayar saat selesai di kasir.`)) return;
+      try { await api('/admin/sessions', { body: { table_id: b.table_id, booking_id: b.id } }); toast(`${b.table_name} mulai main`); route(); }
+      catch (e) { toast(e.message, true); }
+    }
+  }));
+  $('.sheet tr.now')?.scrollIntoView({ block: 'center' });
+}
+function cellItem(x) {
+  const isFirst = !x._shown; x._shown = true; // baris pertama yang dilewati booking ini menampilkan detail
+  const time = `${fmtTime(x.s)}–${fmtTime(x.e)}`;
+  if (x.kind === 'walk') return `<div class="it walk${isFirst ? '' : ' cont'}">${isFirst ? `<b>${esc(x.name)}</b><small>${fmtTime(x.s)} · sedang main</small>` : `<small>↳ ${esc(x.name)}</small>`}</div>`;
+  const b = x.b;
+  if (!isFirst) return `<div class="it ${x.state} cont"><small>↳ ${esc(b.customer_name)}</small></div>`;
+  return `<div class="it ${x.state}"><b title="${esc(b.customer_name)}">${esc(b.customer_name)}</b><small>${time} · ${esc(b.code)}</small>${statusSelect(b, x.state)}</div>`;
+}
+function statusSelect(b, state) {
+  const o = [[state, BK_LABEL[state]]];
+  const open = ['pending', 'confirmed'].includes(b.status);
+  if (open && !b.paid) o.push(['pay', 'Lunas…']);
+  if (open) o.push(['start', 'Sudah datang (mulai main)'], ['resch', 'Ganti jadwal…'], ['noshow', 'Tidak datang']);
+  if (open && isAdmin()) o.push(['cancel', 'Batalkan…']);
+  return `<select class="st" data-bk="${b.id}" data-cur="${state}"${open ? '' : ' disabled'} aria-label="Status ${esc(b.customer_name)}">${
+    o.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
 }
 function bookingActions(b) {
   const a = [];
@@ -345,15 +437,15 @@ function bookingAction(act, b, info) {
     api(`/admin/bookings/${b.id}/noshow`, { method: 'POST' }).then(() => { toast('Ditandai tidak datang'); route(); }).catch((e) => toast(e.message, true));
   }
 }
-function newBookingDialog(info, date) {
+function newBookingDialog(info, date, pre = {}) {
   const d = openDlg(`<h2>Tambah booking</h2><p class="muted">Untuk pesanan lewat telepon/WhatsApp. Pelanggan yang datang langsung cukup dimulai dari menu Kasir & meja.</p>
     <form id="fn">
     <label class="f"><span>Nama</span><input name="name" required maxlength="80"></label>
     <label class="f"><span>Nomor WhatsApp</span><input name="phone" type="tel"></label>
     <div class="grid2"><label class="f"><span>Tanggal</span><input type="date" name="date" value="${date}" required></label>
-    <label class="f"><span>Meja</span><select name="table_id">${info.tables.map((t) => `<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select></label>
-    <label class="f"><span>Jam mulai</span><input type="time" name="time" step="60" value="19:00" required></label>
-    <label class="f"><span>Jam selesai</span><input type="time" name="end" step="60" value="22:00" required></label></div>
+    <label class="f"><span>Meja</span><select name="table_id">${info.tables.map((t) => `<option value="${t.id}"${t.id === pre.table_id ? ' selected' : ''}>${esc(t.name)}</option>`).join('')}</select></label>
+    <label class="f"><span>Jam mulai</span><input type="time" name="time" step="60" value="${pre.time || '19:00'}" required></label>
+    <label class="f"><span>Jam selesai</span><input type="time" name="end" step="60" value="${pre.end || '22:00'}" required></label></div>
     <label class="f"><span>Pembayaran</span><select name="paid_method"><option value="">Belum bayar</option>${Object.entries(METHOD).map(([k, v]) => `<option value="${k}">Sudah bayar · ${v}</option>`).join('')}</select></label>
     <label class="f"><span>Catatan</span><input name="note" maxlength="300"></label>
     <button class="btn">Simpan booking</button></form>`);
@@ -361,7 +453,7 @@ function newBookingDialog(info, date) {
     e.preventDefault(); const f = e.target;
     try {
       const r = await api('/admin/bookings', { body: { name: f.name.value, phone: f.phone.value, date: f.date.value, table_id: +f.table_id.value, time: f.time.value, minutes: spanMin(f.time.value, f.end.value), paid_method: f.paid_method.value || undefined, note: f.note.value } });
-      toast('Booking ' + r.code + ' tersimpan'); closeDlg(); location.hash = '#booking?d=' + f.date.value; route();
+      toast('Booking ' + r.code + ' tersimpan'); closeDlg(); const want = pre.back || '#booking?d=' + f.date.value; if (location.hash === want) route(); else location.hash = want;
     } catch (err) { toast(err.message, true); }
   });
 }

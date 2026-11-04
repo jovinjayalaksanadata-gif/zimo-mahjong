@@ -171,6 +171,7 @@ $('#f').addEventListener('submit', async (e) => {
     const t = st.info.tables.find((x) => x.id === st.table);
     $('#d-code').textContent = r.code;
     $('#d-detail').innerHTML = `<b>${esc(t.name)}</b> · ${fmtDate(r.start_ts)}, ${fmtTime(r.start_ts)}–${fmtTime(r.end_ts)} · <b class="num">${rp(r.total)}</b>`;
+    $('#d-qamt').textContent = rp(r.total);
     $('#d-pay').textContent = r.payment_info;
     $('#d-exp').textContent = fmtDT(r.expires_at);
     $('#d-wa').href = waLink(r.whatsapp, `Halo Zi Mo, saya mau konfirmasi pembayaran booking ${r.code} a.n. ${fd.get('name')} (${t.name}, ${fmtDate(r.start_ts)} ${fmtTime(r.start_ts)}–${fmtTime(r.end_ts)}, ${rp(r.total)}). Bukti transfer terlampir.`);
