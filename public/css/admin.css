@@ -139,3 +139,48 @@ dialog::backdrop { background: rgba(0, 30, 20, .55); }
   input, select { min-height: 44px; }
   button.link { padding: 6px 0; }
 }
+
+/* Booking: tab Jadwal / Daftar */
+.seg { display: inline-flex; border: 1.5px solid var(--jade); border-radius: 8px; overflow: hidden; }
+.seg a { padding: 8px 14px; font-size: .9rem; text-decoration: none; color: var(--jade); }
+.seg a[aria-selected='true'] { background: var(--jade); color: var(--ivory); }
+
+/* Booking: jadwal jam × meja (seperti sheet) */
+.sheet-wrap { overflow: auto; max-height: calc(100vh - 220px); border: 1.5px solid #1d2b24; border-radius: 4px; background: #fff; }
+table.sheet { border-collapse: separate; border-spacing: 0; min-width: 100%; font-size: .82rem; table-layout: fixed; }
+.sheet th, .sheet td { border-right: 1px solid #1d2b24; border-bottom: 1px solid #1d2b24; }
+.sheet thead th { position: sticky; background: #fff; z-index: 2; font-weight: 700; text-align: center; padding: 6px 4px; }
+.sheet thead tr.day th { top: 0; background: #e99a96; color: #1d2b24; font-size: 1rem; padding: 10px 4px; text-align: left; }
+.sheet .day-t { position: sticky; left: 120px; display: inline-block; padding-left: 12px; }
+.sheet thead tr:not(.day) th { top: 41px; }
+.sheet th.hr { position: sticky; left: 0; z-index: 1; background: #fff; width: 110px; min-width: 110px; font: 600 .8rem/1.2 var(--mono); text-align: center; padding: 0 6px; }
+.sheet thead th.hr { z-index: 3; left: 0; position: sticky; }
+.sheet thead tr.day th.hr { background: #e99a96; }
+.sheet thead th:not(.hr) { min-width: 132px; width: 132px; }
+.sheet td.cell { vertical-align: top; padding: 4px; height: 58px; background: #fff; }
+.sheet td.cell.past { background: #f6f3ea; }
+.sheet tr.now th.hr { background: var(--red); color: #fff; }
+.sheet tr.now td.cell { box-shadow: inset 0 2px 0 var(--red); }
+.sheet select.st { width: 100%; font: 500 .78rem/1.2 var(--serif); padding: 3px 6px; min-height: 0; border-radius: 4px; border: 1px solid #cfc6ae; background: #eceae4; }
+.sheet td.empty select.st { color: var(--muted); }
+.sheet td.empty select.st:disabled { opacity: .45; }
+.sheet .it { border-radius: 4px; padding: 4px 5px; margin-bottom: 3px; line-height: 1.25; }
+.sheet .it:last-child { margin-bottom: 0; }
+.sheet .it b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .82rem; }
+.sheet .it small { display: block; font: 500 .68rem/1.3 var(--mono); color: #4a554e; margin-bottom: 3px; }
+.sheet .it.cont { padding: 3px 5px; min-height: 48px; }
+.sheet .it.cont small { margin: 0; }
+.sheet .it select.st { background: rgba(255, 255, 255, .75); }
+.it.unpaid, .lg.unpaid { background: #fbe7c4; }
+.it.paid, .lg.paid { background: #cfe9da; }
+.it.done, .lg.done { background: #d9e3f2; }
+.it.walk, .lg.walk { background: #bfe0d1; }
+.it.noshow, .lg.noshow { background: #e7e3da; color: var(--muted); }
+.sheet-legend { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; font-size: .8rem; }
+.sheet-legend .lg { padding: 3px 10px; border-radius: 999px; }
+@media (max-width: 700px) {
+  .sheet-wrap { max-height: calc(100vh - 170px); }
+  .sheet th.hr { width: 74px; min-width: 74px; font-size: .7rem; }
+  .sheet .day-t { left: 80px; font-size: .9rem; }
+  .sheet thead th:not(.hr) { min-width: 118px; width: 118px; }
+}
