@@ -78,6 +78,11 @@ aside { position: sticky; top: 16px; }
 .breakdown li { display: flex; justify-content: space-between; gap: 10px; }
 .done { max-width: 620px; margin: 0 auto; text-align: center; }
 .code { font: 600 clamp(2rem, 7vw, 3rem)/1 var(--mono); letter-spacing: .06em; color: var(--red); margin: 8px 0 18px; }
+.qris { background: #fff; border: 1.5px solid var(--line); border-radius: 10px; padding: 16px; margin: 18px 0; text-align: center; }
+.qris img { width: min(300px, 100%); margin: 0 auto 10px; border-radius: 6px; }
+.qris p { margin: 0 0 4px; }
+.qris .amt { font: 600 1.5rem/1.2 var(--mono); color: var(--red); }
+.qris a { font-size: .88rem; }
 .payinfo { white-space: pre-line; text-align: left; background: var(--paper); padding: 16px 18px; border-radius: 8px; margin: 18px 0; }
 @media (max-width: 1100px) { .layout { grid-template-columns: minmax(0,1fr) 300px; gap: 24px; } }
 @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } aside { position: static; } }
@@ -151,6 +156,13 @@ aside { position: sticky; top: 16px; }
     <p>Simpan kode ini untuk cek atau ganti jadwal.</p>
     <div class="code" id="d-code"></div>
     <p id="d-detail"></p>
+    <div class="qris">
+      <p><b>Bayar pakai QRIS</b> (semua e-wallet & m-banking)</p>
+      <img src="/assets/qris.png" alt="QRIS Zi Mo" width="757" height="987" loading="lazy">
+      <p>Masukkan nominal persis</p>
+      <p class="amt" id="d-qamt"></p>
+      <a href="/assets/qris.png" download="QRIS-ZiMo.png">Simpan gambar QRIS</a>
+    </div>
     <div class="payinfo" id="d-pay"></div>
     <p class="muted">Selesaikan pembayaran sebelum <b id="d-exp"></b> WIB, lalu kirim bukti transfer lewat WhatsApp. Kalau belum dibayar sampai batas itu, slot dilepas otomatis.</p>
     <div class="row" style="justify-content:center;margin-top:20px">

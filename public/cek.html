@@ -15,6 +15,11 @@ main { padding-top: 40px; max-width: 560px; }
 dl.d { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 16px 0; }
 dl.d dt { color: var(--muted); }
 dl.d dd { margin: 0; font-weight: 700; }
+.qris { background: #fff; border: 1.5px solid var(--line); border-radius: 10px; padding: 16px; margin: 18px 0; text-align: center; }
+.qris img { width: min(300px, 100%); margin: 0 auto 10px; border-radius: 6px; }
+.qris p { margin: 0 0 4px; }
+.qris .amt { font: 600 1.5rem/1.2 var(--mono); color: var(--red); }
+.qris a { font-size: .88rem; }
 .payinfo { white-space: pre-line; background: var(--paper); padding: 14px 16px; border-radius: 8px; }
 .grid3 { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; }
 @media (max-width: 480px) { .grid3 { grid-template-columns: 1fr; } }
@@ -37,7 +42,14 @@ dl.d dd { margin: 0; font-weight: 700; }
     <div class="row"><span class="code" id="r-code"></span><span class="pill" id="r-status"></span></div>
     <dl class="d" id="r-dl"></dl>
     <div id="r-pay" class="hide">
-      <p class="payinfo" id="r-payinfo"></p>
+      <div class="qris">
+      <p><b>Bayar pakai QRIS</b> (semua e-wallet & m-banking)</p>
+      <img src="/assets/qris.png" alt="QRIS Zi Mo" width="757" height="987" loading="lazy">
+      <p>Masukkan nominal persis</p>
+      <p class="amt" id="r-qamt"></p>
+      <a href="/assets/qris.png" download="QRIS-ZiMo.png">Simpan gambar QRIS</a>
+    </div>
+    <p class="payinfo" id="r-payinfo"></p>
       <p><a class="btn jade small" id="r-wa" target="_blank" rel="noopener">Kirim bukti via WhatsApp</a></p>
     </div>
     <div id="r-resch" class="hide" style="margin-top:28px">
@@ -76,6 +88,7 @@ async function look() {
     const unpaid = b.status === 'pending';
     $('#r-pay').classList.toggle('hide', !unpaid);
     if (unpaid) {
+      $('#r-qamt').textContent = rp(b.total);
       $('#r-payinfo').textContent = cur.payment_info + `\n\nBayar sebelum ${fmtDT(b.expires_at)} WIB.`;
       $('#r-wa').href = waLink(cur.whatsapp, `Halo Zi Mo, konfirmasi pembayaran booking ${b.code} a.n. ${b.customer_name} (${rp(b.total)}).`);
     }
